@@ -1,0 +1,21 @@
+#lib/
+/lib/boost_1_71_0/
+/lib/boost_1_71_0.tar.bz2
+/lib/boost_1_71_0_installation/
+
+#bin
+# exclude everything
+/bin/*
+# exception to the rule
+!/bin/README.md
+
+#docking_test
+/docking_test/
+
+# cmake related
+/CMakeFiles/
+/cmake_install.cmake
+/Makefile
+/CMakeCache.txt
+
+.vscode/

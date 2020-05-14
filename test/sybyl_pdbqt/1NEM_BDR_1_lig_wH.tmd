@@ -1,0 +1,138 @@
+REMARK  22 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C4_1  and  C5_8
+REMARK    2  A    between atoms: C1_3  and  O5_58
+REMARK    3  A    between atoms: C2_4  and  O2_5
+REMARK    4  A    between atoms: C3_6  and  O3_7
+REMARK    5  A    between atoms: O3_7  and  C1_14
+REMARK    6  A    between atoms: C5_8  and  O5_9
+REMARK    7  A    between atoms: C5_12  and  C6_21
+REMARK    8  A    between atoms: C2_15  and  N2_16
+REMARK    9  A    between atoms: C3_17  and  O3_18
+REMARK   10  A    between atoms: C4_19  and  O4_20
+REMARK   11  A    between atoms: C6_21  and  N6_22
+REMARK   12  A    between atoms: C5_31  and  C6_40
+REMARK   13  A    between atoms: C1_33  and  O4_56
+REMARK   14  A    between atoms: C2_34  and  N2_35
+REMARK   15  A    between atoms: C3_36  and  O3_37
+REMARK   16  A    between atoms: C4_38  and  O4_39
+REMARK   17  A    between atoms: C6_40  and  N6_41
+REMARK   18  A    between atoms: C1_50  and  N1_51
+REMARK   19  A    between atoms: C3_53  and  N3_54
+REMARK   20  A    between atoms: C4_55  and  O4_56
+REMARK   21  A    between atoms: C5_57  and  O5_58
+REMARK   22  A    between atoms: C6_59  and  O6_60
+ROOT
+ATOM      1  C1  NEB A          -2.783   1.981  -1.314  0.00  0.00     0.216 C    C.3  
+ATOM      2  C2  NEB A          -3.942   1.372  -0.533  0.00  0.00     0.071 C    C.3  
+ATOM      3  C3  NEB A          -3.722  -0.120  -0.326  0.00  0.00     0.217 C    C.3  
+ATOM      4  C4  NEB A          -2.419  -0.350   0.436  0.00  0.00     0.186 C    C.3  
+ATOM      5  C5  NEB A          -1.231   0.261  -0.320  0.00  0.00     0.186 C    C.3  
+ATOM      6  C6  NEB A          -1.452   1.745  -0.602  0.00  0.00     0.180 C    C.3  
+ENDROOT
+BRANCH   5   7
+ATOM      7  O5  NEB A          -0.037   0.119   0.473  0.00  0.00    -0.348 OA   O.3  
+BRANCH   7   8
+ATOM      8  C1  BDR A           1.101  -0.425  -0.192  0.00  0.00     0.292 C    C.3  
+ATOM      9  O   BDR A           1.213  -1.761   0.299  0.00  0.00    -0.348 OA   O.3  
+ATOM     10  C4  BDR A           2.423  -1.870   1.043  0.00  0.00     0.180 C    C.3  
+ATOM     11  C3  BDR A           2.668  -0.446   1.516  0.00  0.00     0.189 C    C.3  
+ATOM     12  C2  BDR A           2.397   0.286   0.215  0.00  0.00     0.205 C    C.3  
+BRANCH  10  13
+ATOM     13  C5  BDR A           2.277  -2.898   2.164  0.00  0.00     0.198 C    C.3  
+BRANCH  13  14
+ATOM     14  O5  BDR A           2.091  -4.230   1.681  0.00  0.00    -0.398 OA   O.3  
+ATOM     15  H5  BDR A           1.858  -4.782   2.436  0.00  0.00     0.209 HD   H    
+ENDBRANCH  13  14
+ENDBRANCH  10  13
+BRANCH  11  16
+ATOM     16  O3  BDR A           4.007  -0.388   2.013  0.00  0.00    -0.348 OA   O.3  
+BRANCH  16  17
+ATOM     17  C1  IDG A           4.286   0.640   2.920  0.00  0.00     0.294 C    C.3  
+ATOM     18  O5  IDG A           3.399   0.639   4.031  0.00  0.00    -0.349 OA   O.3  
+ATOM     19  C5  IDG A           3.623   1.725   4.951  0.00  0.00     0.181 C    C.3  
+ATOM     20  C4  IDG A           5.018   1.605   5.558  0.00  0.00     0.179 C    C.3  
+ATOM     21  C3  IDG A           6.066   1.586   4.441  0.00  0.00     0.184 C    C.3  
+ATOM     22  C2  IDG A           5.740   0.515   3.395  0.00  0.00     0.269 C    C.3  
+BRANCH  19  23
+ATOM     23  C6  IDG A           2.514   1.697   5.988  0.00  0.00     0.264 C    C.3  
+BRANCH  23  24
+ATOM     24  N6  IDG A           1.225   2.164   5.431  0.00  0.00    -0.077 N    N.4  
+ATOM     25 1HN6 IDG A           0.904   1.471   4.722  0.00  0.00     0.274 HD   H    
+ATOM     26 2HN6 IDG A           0.494   2.257   6.173  0.00  0.00     0.274 HD   H    
+ATOM     27 3HN6 IDG A           1.341   3.089   4.968  0.00  0.00     0.274 HD   H    
+ENDBRANCH  23  24
+ENDBRANCH  19  23
+BRANCH  20  28
+ATOM     28  O4  IDG A           5.107   0.420   6.339  0.00  0.00    -0.390 OA   O.3  
+ATOM     29  HO4 IDG A           5.909   0.432   6.872  0.00  0.00     0.210 HD   H    
+ENDBRANCH  20  28
+BRANCH  21  30
+ATOM     30  O3  IDG A           6.121   2.862   3.817  0.00  0.00    -0.391 OA   O.3  
+ATOM     31  HO3 IDG A           6.121   3.574   4.466  0.00  0.00     0.210 HD   H    
+ENDBRANCH  21  30
+BRANCH  22  32
+ATOM     32  N2  IDG A           5.991  -0.855   3.915  0.00  0.00    -0.068 N    N.4  
+ATOM     33 1HN2 IDG A           5.681  -1.541   3.190  0.00  0.00     0.275 HD   H    
+ATOM     34 2HN2 IDG A           7.005  -1.010   4.082  0.00  0.00     0.275 HD   H    
+ATOM     35 3HN2 IDG A           5.465  -1.022   4.799  0.00  0.00     0.275 HD   H    
+ENDBRANCH  22  32
+ENDBRANCH  16  17
+ENDBRANCH  11  16
+BRANCH  12  36
+ATOM     36  O2  BDR A           3.417   0.049  -0.761  0.00  0.00    -0.388 OA   O.3  
+ATOM     37  HO2 BDR A           4.263   0.283  -0.366  0.00  0.00     0.210 HD   H    
+ENDBRANCH  12  36
+ENDBRANCH   7   8
+ENDBRANCH   5   7
+BRANCH   4  38
+ATOM     38  O4  NEB A          -2.204  -1.765   0.603  0.00  0.00    -0.349 OA   O.3  
+BRANCH  38  39
+ATOM     39  C1  BDG A          -1.605  -2.145   1.810  0.00  0.00     0.294 C    C.3  
+ATOM     40  O5  BDG A          -2.454  -1.904   2.929  0.00  0.00    -0.349 OA   O.3  
+ATOM     41  C5  BDG A          -3.661  -2.693   2.947  0.00  0.00     0.181 C    C.3  
+ATOM     42  C4  BDG A          -3.316  -4.181   2.942  0.00  0.00     0.179 C    C.3  
+ATOM     43  C3  BDG A          -2.447  -4.498   1.727  0.00  0.00     0.184 C    C.3  
+ATOM     44  C2  BDG A          -1.205  -3.617   1.745  0.00  0.00     0.269 C    C.3  
+BRANCH  41  45
+ATOM     45  C6  BDG A          -4.452  -2.283   4.177  0.00  0.00     0.264 C    C.3  
+BRANCH  45  46
+ATOM     46  N6  BDG A          -5.036  -0.931   4.022  0.00  0.00    -0.077 N    N.4  
+ATOM     47 1HN6 BDG A          -5.709  -0.942   3.230  0.00  0.00     0.274 HD   H    
+ATOM     48 2HN6 BDG A          -5.517  -0.631   4.902  0.00  0.00     0.274 HD   H    
+ATOM     49 3HN6 BDG A          -4.279  -0.240   3.842  0.00  0.00     0.274 HD   H    
+ENDBRANCH  45  46
+ENDBRANCH  41  45
+BRANCH  42  50
+ATOM     50  O4  BDG A          -4.511  -4.950   2.896  0.00  0.00    -0.390 OA   O.3  
+ATOM     51  HO4 BDG A          -4.274  -5.878   2.810  0.00  0.00     0.210 HD   H    
+ENDBRANCH  42  50
+BRANCH  43  52
+ATOM     52  O3  BDG A          -2.062  -5.864   1.745  0.00  0.00    -0.391 OA   O.3  
+ATOM     53  HO3 BDG A          -1.466  -6.029   2.483  0.00  0.00     0.210 HD   H    
+ENDBRANCH  43  52
+BRANCH  44  54
+ATOM     54  N2  BDG A          -0.401  -3.877   0.527  0.00  0.00    -0.068 N    N.4  
+ATOM     55 1HN2 BDG A           0.524  -3.400   0.577  0.00  0.00     0.275 HD   H    
+ATOM     56 2HN2 BDG A          -0.230  -4.895   0.401  0.00  0.00     0.275 HD   H    
+ATOM     57 3HN2 BDG A          -0.889  -3.509  -0.318  0.00  0.00     0.275 HD   H    
+ENDBRANCH  44  54
+ENDBRANCH  38  39
+ENDBRANCH   4  38
+BRANCH   6  58
+ATOM     58  O6  NEB A          -0.390   2.238  -1.408  0.00  0.00    -0.391 OA   O.3  
+ATOM     59  HO6 NEB A           0.457   2.054  -0.992  0.00  0.00     0.210 HD   H    
+ENDBRANCH   6  58
+BRANCH   3  60
+ATOM     60  N3  NEB A          -4.859  -0.639   0.421  0.00  0.00    -0.072 N    N.4  
+ATOM     61  H31 NEB A          -5.691  -0.555  -0.133  0.00  0.00     0.274 HD   H    
+ATOM     62  H32 NEB A          -4.966  -0.090   1.248  0.00  0.00     0.274 HD   H    
+ATOM     63 1HN3 NEB A          -4.701  -1.606   0.665  0.00  0.00     0.274 HD   H    
+ENDBRANCH   3  60
+BRANCH   1  64
+ATOM     64  N1  NEB A          -3.009   3.432  -1.506  0.00  0.00    -0.072 N    N.4  
+ATOM     65  H11 NEB A          -2.173   3.827  -1.986  0.00  0.00     0.274 HD   H    
+ATOM     66  H12 NEB A          -3.849   3.555  -2.105  0.00  0.00     0.274 HD   H    
+ATOM     67  H13 NEB A          -3.142   3.914  -0.592  0.00  0.00     0.274 HD   H    
+ENDBRANCH   1  64
+TORSDOF 22

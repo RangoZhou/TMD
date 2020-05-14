@@ -1,0 +1,169 @@
+cite_message
+Using seed: 743243
+hello
+decalare rna...
+start read rna information...
+finish reading rna!
+decalare ligand...
+start read ligand information...
+Initialize ligand's nodes...
+total max depth--->5
+depth 0 has 1 nodes
+depth 1 has 2 nodes
+depth 2 has 1 nodes
+depth 3 has 1 nodes
+depth 4 has 2 nodes
+assign atom range to each node...
+Establish parent and children's connection...
+finish reading ligand!
+#####################Ligand#####################
+Structure--->
+node--NodeId[0,0]--> conf: {(0, 0, 0),(0, 0, 1),0} range: [0] root  children_num: 2 bonded atom index[0,0]
+node--NodeId[1,0]--> conf: {(-2.59, -2.363, -1.424),(0.163037, -0.568993, 0.806019),0} range: [1] parentID: NodeId[0,0] children_num: 1 bonded atom index[0,1]
+node--NodeId[2,0]--> conf: {(-2.341, -3.232, -0.193),(0.897278, 0.215503, 0.385294),0} range: [2] parentID: NodeId[1,0] children_num: 1 bonded atom index[1,2]
+node--NodeId[3,0]--> conf: {(-0.967, -2.902, 0.397),(0.185724, -0.60344, 0.775479),0} range: [3] parentID: NodeId[2,0] children_num: 2 bonded atom index[2,3]
+node--NodeId[4,0]--> conf: {(-0.682, -3.828, 1.587),(0.485984, 0.512091, 0.708225),0} range: [4 5 6 7] parentID: NodeId[3,0] children_num: 0 bonded atom index[3,4]
+node--NodeId[4,1]--> conf: {(-0.682, -3.828, 1.587),(0.556531, -0.775633, -0.29777),0} range: [8 9] parentID: NodeId[3,0] children_num: 0 bonded atom index[3,8]
+node--NodeId[1,1]--> conf: {(-2.59, -2.363, -1.424),(-0.98348, 0.045009, -0.175333),0} range: [10 11 12 13 14 15 16 17 18] parentID: NodeId[0,0] children_num: 0 bonded atom index[0,10]
+Atom--->
+atom      1  CD     ARG d   0     -2.590  -2.363  -1.424   C.3     C     0.138
+atom      2  CG     ARG d   0     -2.341  -3.232  -0.193   C.3     C     0.023
+atom      3  CB     ARG d   0     -0.967  -2.902   0.397   C.3     C     0.041
+atom      4  CA     ARG d   0     -0.682  -3.828   1.587   C.3     C     0.244
+atom      5  N      ARG d   0      0.044  -3.063   2.645   N.4     N    -0.069
+atom      6  HN1    ARG d   0      0.233  -3.670   3.430     H     H     0.275
+atom      7  HN2    ARG d   0     -0.526  -2.287   2.950     H     H     0.275
+atom      8  HN3    ARG d   0      0.915  -2.715   2.271     H     H     0.275
+atom      9  C      ARG d   0      0.174  -5.021   1.129   C.2     C     0.263
+atom     10  O      ARG d   0      0.012  -5.515   0.029   O.2     O    -0.305
+atom     11  NE     ARG d   0     -4.054  -2.296  -1.685 N.pl3     N    -0.227
+atom     12  CZ     ARG d   0     -4.549  -2.811  -2.777 C.cat     C     0.665
+atom     13  NH2    ARG d   0     -5.391  -3.809  -2.701 N.pl3     N    -0.235
+atom     14  NH1    ARG d   0     -4.208  -2.324  -3.942 N.pl3     N    -0.235
+atom     15  1HH2   ARG d   0     -5.654  -4.180  -1.799     H     H     0.174
+atom     16  2HH2   ARG d   0     -5.778  -4.208  -3.544     H     H     0.174
+atom     17  1HH1   ARG d   0     -3.560  -1.552  -3.996     H     H     0.174
+atom     18  2HH1   ARG d   0     -4.593  -2.720  -4.787     H     H     0.174
+atom     19  HE     ARG d   0     -4.665  -1.851  -1.016     H     H     0.177
+ligand has 12 dofs
+scoring function init...
+rna atom num: 964 ligand atom num: 19
+std::thread::hardware_concurrency() return <=0, so using 1 thread!
+thread num: 1 ligand atom num: 19
+start initializing grids...
+grid_shifts size -> 2197
+process rna atom grid_map...
+finish initializing grids...18229
+number of contact 95
+ u size 95
+box center: (-2.54, -3.18, -0.71)
+box size: 8 8 8
+box corner1 and corner2: (-6.54, -7.18, -4.71) (1.46, 0.82, 3.29)
+randomized_times: 1 score: 10.3122
+randomized_times: 2 score: -0.58123
+randomized initialized dofs --> -1.02626 -6.45008 0.683281 -2.04443 -1.26014 -1.45938 
+converged: 0 score: -5.06218 temperature: 900 already_saved_ligands -> 212
+converged: 0 score: -5.247 temperature: 810 already_saved_ligands -> 372
+converged: 0 score: -6.08216 temperature: 729 already_saved_ligands -> 531
+converged: 0 score: -8.23198 temperature: 656.1 already_saved_ligands -> 752
+converged: 0 score: -8.23198 temperature: 590.49 already_saved_ligands -> 1092
+converged: 0 score: -8.23198 temperature: 531.441 already_saved_ligands -> 1235
+converged: 0 score: -8.23198 temperature: 478.297 already_saved_ligands -> 1386
+converged: 0 score: -8.23198 temperature: 430.467 already_saved_ligands -> 1585
+converged: 0 score: -8.23198 temperature: 387.42 already_saved_ligands -> 1756
+converged: 0 score: -8.23198 temperature: 348.678 already_saved_ligands -> 1898
+converged: 0 score: -8.23198 temperature: 313.811 already_saved_ligands -> 1986
+converged: 0 score: -8.23198 temperature: 282.43 already_saved_ligands -> 2261
+converged: 0 score: -8.23198 temperature: 254.187 already_saved_ligands -> 2492
+converged: 0 score: -8.23198 temperature: 228.768 already_saved_ligands -> 2688
+converged: 0 score: -8.23198 temperature: 205.891 already_saved_ligands -> 2994
+converged: 0 score: -8.23198 temperature: 185.302 already_saved_ligands -> 3183
+converged: 0 score: -8.23198 temperature: 166.772 already_saved_ligands -> 3397
+converged: 0 score: -8.23198 temperature: 150.095 already_saved_ligands -> 3709
+converged: 0 score: -8.23198 temperature: 135.085 already_saved_ligands -> 3824
+converged: 0 score: -8.23198 temperature: 121.577 already_saved_ligands -> 4041
+converged: 0 score: -8.23198 temperature: 109.419 already_saved_ligands -> 4170
+converged: 0 score: -8.23198 temperature: 98.4771 already_saved_ligands -> 4401
+converged: 0 score: -8.23198 temperature: 88.6294 already_saved_ligands -> 4513
+converged: 0 score: -8.23198 temperature: 79.7664 already_saved_ligands -> 4526
+converged: 0 score: -8.23198 temperature: 71.7898 already_saved_ligands -> 4730
+converged: 0 score: -8.23198 temperature: 64.6108 already_saved_ligands -> 4977
+converged: 0 score: -8.23198 temperature: 58.1497 already_saved_ligands -> 5260
+converged: 0 score: -8.23198 temperature: 52.3348 already_saved_ligands -> 5559
+converged: 0 score: -8.23198 temperature: 47.1013 already_saved_ligands -> 5786
+converged: 0 score: -8.23198 temperature: 42.3912 already_saved_ligands -> 6040
+converged: 0 score: -8.23198 temperature: 38.152 already_saved_ligands -> 6262
+converged: 0 score: -8.23198 temperature: 34.3368 already_saved_ligands -> 6488
+converged: 0 score: -8.23198 temperature: 30.9032 already_saved_ligands -> 6736
+converged: 0 score: -8.23198 temperature: 27.8128 already_saved_ligands -> 6954
+converged: 0 score: -8.23198 temperature: 25.0316 already_saved_ligands -> 7292
+converged: 0 score: -8.23198 temperature: 22.5284 already_saved_ligands -> 7492
+converged: 0 score: -8.23198 temperature: 20.2756 already_saved_ligands -> 7774
+converged: 0 score: -8.23198 temperature: 18.248 already_saved_ligands -> 7956
+converged: 0 score: -8.23198 temperature: 16.4232 already_saved_ligands -> 8213
+converged: 0 score: -8.23198 temperature: 14.7809 already_saved_ligands -> 8585
+converged: 0 score: -8.23198 temperature: 13.3028 already_saved_ligands -> 8932
+converged: 0 score: -8.23198 temperature: 11.9725 already_saved_ligands -> 9260
+converged: 0 score: -8.23198 temperature: 10.7753 already_saved_ligands -> 9672
+converged: 0 score: -8.23198 temperature: 9.69774 already_saved_ligands -> 10041
+converged: 0 score: -8.23198 temperature: 8.72796 already_saved_ligands -> 10440
+converged: 0 score: -8.23198 temperature: 7.85517 already_saved_ligands -> 10765
+converged: 0 score: -8.23198 temperature: 7.06965 already_saved_ligands -> 11020
+converged: 0 score: -8.23198 temperature: 6.36269 already_saved_ligands -> 11418
+converged: 0 score: -8.23198 temperature: 5.72642 already_saved_ligands -> 11839
+converged: 0 score: -8.23198 temperature: 5.15378 already_saved_ligands -> 12285
+converged: 0 score: -8.23198 temperature: 4.6384 already_saved_ligands -> 12720
+converged: 0 score: -10.1888 temperature: 4.17456 already_saved_ligands -> 13322
+converged: 0 score: -10.1888 temperature: 3.7571 already_saved_ligands -> 14069
+converged: 0 score: -10.2285 temperature: 3.38139 already_saved_ligands -> 14824
+converged: 0 score: -11.3552 temperature: 3.04325 already_saved_ligands -> 15609
+converged: 0 score: -11.4362 temperature: 2.73893 already_saved_ligands -> 16448
+converged: 0 score: -11.6383 temperature: 2.46503 already_saved_ligands -> 17316
+converged: 0 score: -11.6383 temperature: 2.21853 already_saved_ligands -> 18212
+converged: 0 score: -11.6383 temperature: 1.99668 already_saved_ligands -> 19099
+converged: 0 score: -11.6383 temperature: 1.79701 already_saved_ligands -> 19981
+converged: 0 score: -12.4967 temperature: 1.61731 already_saved_ligands -> 20877
+converged: 0 score: -12.4967 temperature: 1.45558 already_saved_ligands -> 21787
+converged: 0 score: -12.4967 temperature: 1.31002 already_saved_ligands -> 22693
+converged: 0 score: -12.4967 temperature: 1.17902 already_saved_ligands -> 23548
+converged: 0 score: -12.4967 temperature: 1.06112 already_saved_ligands -> 24360
+converged: 0 score: -12.4967 temperature: 0.955005 already_saved_ligands -> 25149
+converged: 0 score: -12.4967 temperature: 0.859504 already_saved_ligands -> 25968
+converged: 0 score: -12.4967 temperature: 0.773554 already_saved_ligands -> 26796
+converged: 0 score: -12.4967 temperature: 0.696199 already_saved_ligands -> 27618
+converged: 0 score: -12.4967 temperature: 0.626579 already_saved_ligands -> 28488
+converged: 0 score: -12.4967 temperature: 0.563921 already_saved_ligands -> 29378
+converged: 0 score: -12.4967 temperature: 0.507529 already_saved_ligands -> 30242
+converged: 0 score: -12.4967 temperature: 0.456776 already_saved_ligands -> 31116
+converged: 0 score: -12.4967 temperature: 0.411098 already_saved_ligands -> 31998
+converged: 0 score: -12.4967 temperature: 0.369988 already_saved_ligands -> 32879
+converged: 0 score: -12.4967 temperature: 0.33299 already_saved_ligands -> 33656
+converged: 0 score: -12.4967 temperature: 0.299691 already_saved_ligands -> 34488
+converged: 0 score: -12.4967 temperature: 0.269722 already_saved_ligands -> 35348
+converged: 0 score: -12.4967 temperature: 0.242749 already_saved_ligands -> 36164
+converged: 0 score: -12.4967 temperature: 0.218475 already_saved_ligands -> 36940
+converged: 0 score: -12.4967 temperature: 0.196627 already_saved_ligands -> 37762
+converged: 0 score: -12.4967 temperature: 0.176964 already_saved_ligands -> 38575
+converged: 0 score: -12.4967 temperature: 0.159268 already_saved_ligands -> 39379
+converged: 0 score: -12.4967 temperature: 0.143341 already_saved_ligands -> 40183
+converged: 0 score: -12.4967 temperature: 0.129007 already_saved_ligands -> 40985
+converged: 0 score: -12.4967 temperature: 0.116106 already_saved_ligands -> 41848
+converged: 0 score: -12.4967 temperature: 0.104496 already_saved_ligands -> 42748
+converged: 0 score: -12.4967 temperature: 0.0940461 already_saved_ligands -> 43569
+converged: 0 score: -12.4967 temperature: 0.0846415 already_saved_ligands -> 44415
+converged: 0 score: -12.4967 temperature: 0.0761773 already_saved_ligands -> 45278
+converged: 0 score: -12.4967 temperature: 0.0685596 already_saved_ligands -> 46068
+converged: 0 score: -12.4967 temperature: 0.0617037 already_saved_ligands -> 46821
+converged: 0 score: -12.4967 temperature: 0.0555333 already_saved_ligands -> 47636
+converged: 0 score: -12.4967 temperature: 0.04998 already_saved_ligands -> 48520
+converged: 0 score: -12.4967 temperature: 0.044982 already_saved_ligands -> 49380
+converged: 0 score: -12.4967 temperature: 0.0404838 already_saved_ligands -> 50185
+converged: 0 score: -12.4967 temperature: 0.0364354 already_saved_ligands -> 51010
+converged: 0 score: -12.4967 temperature: 0.0327919 already_saved_ligands -> 51834
+converged: 1 score: -12.4967 temperature: 0.0295127 already_saved_ligands -> 52012
+finish 1th stimulated annealing...
+min dofs: -2.08439 -2.89398 -1.03548 -2.57139 9.28504 -8.03669 
+min score: -12.4967
+min score's rmsd: 0.627833
+output ligand: ./ligandRNA/1AJU_ARG_1/1AJU_ARG_1_lig_wH_out.pdbqt
+

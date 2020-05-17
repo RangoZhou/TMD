@@ -87,7 +87,7 @@ namespace tmd {
 		} else {
 			atom.set_res_serial(0);
 		}
-		atom.set_context(ci,sline);
+		atom.set_context_index(ci);
 		return atom;
 	}
 

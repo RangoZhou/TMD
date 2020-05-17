@@ -34,15 +34,15 @@ class Sampling {
     Ligand& lig;
     Conformers conformers;
     Scoring_Function& score_func;
-    SAMPLE_MODE S_MODE = SAMPLE_RIGID;
-    OPTIMIZATION_MODE O_MODE = SIMULATED_ANEALING;
+    SAMPLE_MODE Sample_Mode = SAMPLE_RIGID;
+    OPTIMIZATION_MODE Optimization_Mode = SIMULATED_ANEALING;
     Box docking_box;
     //random generator
     RNGType& generator;
     std::ostream& log;
 
 public:
-    Sampling(const RNA& r, Ligand& l, Scoring_Function& sf, const Box& b, SAMPLE_MODE s_mode, OPTIMIZATION_MODE o_mode, RNGType& g, std::ostream& lg) : rna(r), lig(l), score_func(sf), docking_box(b), S_MODE(s_mode), O_MODE(o_mode), generator(g), log(lg) {}
+    Sampling(const RNA& r, Ligand& l, Scoring_Function& sf, const Box& b, SAMPLE_MODE s_mode, OPTIMIZATION_MODE o_mode, RNGType& g, std::ostream& lg) : rna(r), lig(l), score_func(sf), docking_box(b), Sample_Mode(s_mode), Optimization_Mode(o_mode), generator(g), log(lg) {}
 
     // void clear_sampled_ligands() {
     //     this->sampled_ligands.clear();
@@ -74,7 +74,7 @@ public:
     }
     const Float operator()(const Floats& cf) {
         // const Floats dofs = cf;
-        if(this->S_MODE == SAMPLE_RIGID || this->S_MODE == SAMPLE_FLEXIBLE) {
+        if(this->Sample_Mode == SAMPLE_RIGID || this->Sample_Mode == SAMPLE_FLEXIBLE) {
             const Float& x = cf[0];
             const Float& y = cf[1];
             const Float& z = cf[2];
@@ -90,12 +90,12 @@ public:
             const Float rot_angle = rot_vector.norm();
             if(std::abs(rot_angle) > 4*k_pi) return k_max_float;
         }
-        if(this->S_MODE == SAMPLE_FLEXIBLE) {
+        if(this->Sample_Mode == SAMPLE_FLEXIBLE) {
             for(Int i = 6; i < cf.size(); ++i) {
                 if(std::abs(cf[i]) > 2*k_pi) return k_max_float;
             }
             this->lig.sample(cf,LIGAND_SAMPLE_FLEXIBLE);
-        } else if(this->S_MODE == SAMPLE_RIGID) {
+        } else if(this->Sample_Mode == SAMPLE_RIGID) {
             this->lig.sample(cf,LIGAND_SAMPLE_RIGID);
         } else {
             assert(false);
@@ -119,9 +119,9 @@ public:
 
     const Floats get_randomized_dofs() {
         Floats start_dofs;
-        if(this->S_MODE == SAMPLE_RIGID) {
+        if(this->Sample_Mode == SAMPLE_RIGID) {
             start_dofs.resize(6,0.0);
-        } else if(this->S_MODE == SAMPLE_FLEXIBLE) {
+        } else if(this->Sample_Mode == SAMPLE_FLEXIBLE) {
             start_dofs.resize(this->lig.dof_num(),0.0);
         } else {
             assert(false);
@@ -139,7 +139,7 @@ public:
             start_dofs[4] = random_root_rot_vector[1];
             start_dofs[5] = random_root_rot_vector[2];
 
-            if(this->S_MODE == SAMPLE_FLEXIBLE) {
+            if(this->Sample_Mode == SAMPLE_FLEXIBLE) {
                 for(tmd::Floats::size_type i = 6; i < start_dofs.size(); ++i) {
                     start_dofs[i] = tmd::random_double(-tmd::k_pi, tmd::k_pi, generator);
                 }
@@ -164,6 +164,8 @@ public:
         unsigned int docking_times = 1;
         const Floats start_dofs = this->get_randomized_dofs();
 
+        // tmd::Float characteristic_score = (*this)(start_dofs);
+
         VecDoub dels(start_dofs.size(),0.01);
         Doub ftol = 0.001;
         VecDoub dofs(start_dofs.size(),0.0);
@@ -173,15 +175,15 @@ public:
         Amebsa<tmd::Sampling> amebsa(dofs, dels, (*this), ftol);
 
         for(unsigned int docking_time = 1; docking_time <= docking_times; ++docking_time) {
-            Doub temperature = 1000;
+            Doub temperature = 100;
             Bool converged = false;
             while(!converged) {
                 Int Iter = 1000;
-                // if(temperature>=500) {
-                //     Iter = Int(1.0 * temperature);
+                // if(temperature>=std::abs(characteristic_score/2.0) && temperature<=std::abs(characteristic_score*1.5)) {
+                //     Iter = 10000;
                 // }
                 converged = amebsa.anneal(Iter, temperature);
-                temperature = 0.9*temperature;
+                temperature = 0.8*temperature;
 
                 this->log << "converged: " << converged <<  " score: " << amebsa.yb << " temperature: " << temperature << " already_saved_ligands -> " << this->conformers.size() << std::endl;
             }
@@ -196,6 +198,7 @@ public:
             assert(tmd::eq(amebsa.yb,final_score));
             this->log << "min score: " << amebsa.yb << std::endl;
             this->log << "min score's rmsd: " << this->lig.rmsd_with_respect_to_ref_atoms() << std::endl;
+            // characteristic_score = final_score;
         }
     }
 

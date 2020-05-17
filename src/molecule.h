@@ -185,16 +185,23 @@ public:
 };
 
 
-inline const Context write_atom_in_its_context(const Atom& a) {
-    std::ostringstream oss;
-    oss.fill(' ');
-    oss << std::setw(8) << std::fixed << std::setprecision(3) << a.get_coord()[0] << std::setw(8) << a.get_coord()[1] << std::setw(8) << a.get_coord()[2];
-    Context tmp_context = a.get_context();
-    tmp_context.c.replace(30, 24, oss.str());//24 is the string size, default fill with space
-    return tmp_context;
-}
-inline void write_contexts(const Contexts& cs, std::ostream& out = std::cout) {
-    for(const Context& c : cs) {
+//Context stores the atom line and its position in the file content while reading
+struct Context {
+    Context_Index index = -1;
+    std::string c = "";
+    Context() {}
+    Context(const Context_Index ci, const std::string ct) : index(ci), c(ct) {}
+};
+
+inline void write_contexts(const Contexts& cs, const Atoms& as, std::ostream& out = std::cout) {
+    Contexts tmp_contexts = cs;
+    for(const Atom& a : as) {
+        std::ostringstream oss;
+        oss.fill(' ');
+        oss << std::setw(8) << std::fixed << std::setprecision(3) << a.get_coord()[0] << std::setw(8) << a.get_coord()[1] << std::setw(8) << a.get_coord()[2];
+        tmp_contexts[a.get_context_index()].c.replace(30, 24, oss.str());//24 is the string size, default fill with space
+    }
+    for(const Context& c : tmp_contexts) {
         out << c.c << std::endl;
     }
 }
@@ -218,12 +225,7 @@ struct Conformer {
     // Conformer() {}
     Conformer(const Float s, const Float r, const Atoms& a) : score(s), rmsd(r), atoms(a) {}
     void write(const Contexts& cs, std::ostream& out = std::cout) {
-        Contexts tmp_contexts = cs;
-        for(const Atom& a : this->atoms) {
-            const Context tmp_context = write_atom_in_its_context(a);
-            tmp_contexts[tmp_context.index] = tmp_context;
-        }
-        write_contexts(tmp_contexts,out);
+        write_contexts(cs,this->atoms,out);
     }
 };
 using Conformer_Index = std::vector<Conformer>::size_type;
@@ -315,7 +317,7 @@ public:
         assert(this->ref_atoms.size()!=0);
         return sum*(1.0/Float(this->ref_atoms.size()));
     }
-    const Contexts get_contexts() const {
+    const Contexts& get_contexts() const {
         return this->contexts;
     }
 
@@ -400,21 +402,11 @@ public:
     }
 
     void write(std::ostream& out = std::cout) {
-        Contexts tmp_contexts = this->contexts;
-        for(const Atom& a : this->atoms) {
-            const Context tmp_context = write_atom_in_its_context(a);
-            tmp_contexts[tmp_context.index] = tmp_context;
-        }
-        write_contexts(tmp_contexts,out);
+        write_contexts(this->contexts,this->atoms,out);
     }
 
     void write_ref(std::ostream& out = std::cout) {
-        Contexts tmp_contexts = this->contexts;
-        for(const Atom& a : this->ref_atoms) {
-            const Context tmp_context = write_atom_in_its_context(a);
-            tmp_contexts[tmp_context.index] = tmp_context;
-        }
-        write_contexts(tmp_contexts,out);
+        write_contexts(this->contexts,this->ref_atoms,out);
     }
 };
 

@@ -47,25 +47,25 @@ inline void yw_score_calculation(unsigned int begin, unsigned int end, const RNA
     const Atoms& lig_atoms = lig.get_atoms_reference();
     for(unsigned int i = begin; i < end; ++i) {
         const Atom& lig_atom = lig_atoms[i];
-        const std::string lig_atom_elemetn_type = lig_atom.get_element_type_name();
+        const std::string& lig_atom_elemetn_type = lig_atom.get_element_type_name();
         if(lig_atom_elemetn_type == "H") continue;
-        const std::string tmp_lig_atom_sybyl_type = lig_atom.get_sybyl_type_name();
-        const std::string lig_atom_sybyl_type = (tmp_lig_atom_sybyl_type=="F" || tmp_lig_atom_sybyl_type=="Cl" || tmp_lig_atom_sybyl_type=="Br" || tmp_lig_atom_sybyl_type=="I") ? "Ha" : tmp_lig_atom_sybyl_type;
+        const std::string& tmp_lig_atom_sybyl_type = lig_atom.get_sybyl_type_name();
+        const std::string& lig_atom_sybyl_type = (tmp_lig_atom_sybyl_type=="F" || tmp_lig_atom_sybyl_type=="Cl" || tmp_lig_atom_sybyl_type=="Br" || tmp_lig_atom_sybyl_type=="I") ? "Ha" : tmp_lig_atom_sybyl_type;
 
-        const Vec3d lig_atom_coord = lig_atom.get_coord();
+        const Vec3d& lig_atom_coord = lig_atom.get_coord();
         const int atom_x_grid = static_cast<int>(lig_atom_coord[0]/grids.width);
         const int atom_y_grid = static_cast<int>(lig_atom_coord[1]/grids.width);
         const int atom_z_grid = static_cast<int>(lig_atom_coord[2]/grids.width);
-        const std::string grid_name = std::to_string(atom_x_grid)+"-"+std::to_string(atom_y_grid)+"-"+std::to_string(atom_z_grid);
+        const std::string& grid_name = std::to_string(atom_x_grid)+"-"+std::to_string(atom_y_grid)+"-"+std::to_string(atom_z_grid);
 
         if(grids.grid_map.find(grid_name)!=grids.grid_map.end()) {
             for(const Atom_Index& j : grids.grid_map.at(grid_name).rigid_atom_mapping) {
                 const Atom& rna_atom = rna_atoms[j];
-                const std::string rna_atom_elemetn_type = rna_atom.get_element_type_name();
+                const std::string& rna_atom_elemetn_type = rna_atom.get_element_type_name();
                 if(rna_atom_elemetn_type == "H") continue;
-                const std::string tmp_rna_atom_sybyl_type = rna_atom.get_sybyl_type_name();
-                const std::string rna_atom_sybyl_type = (tmp_rna_atom_sybyl_type=="F" || tmp_rna_atom_sybyl_type=="Cl" || tmp_rna_atom_sybyl_type=="Br" || tmp_rna_atom_sybyl_type=="I") ? "Ha" : tmp_rna_atom_sybyl_type;
-                const std::string atom_pair_type = (lig_atom_sybyl_type<rna_atom_sybyl_type) ? lig_atom_sybyl_type+"-"+rna_atom_sybyl_type : rna_atom_sybyl_type+"-"+lig_atom_sybyl_type;
+                const std::string& tmp_rna_atom_sybyl_type = rna_atom.get_sybyl_type_name();
+                const std::string& rna_atom_sybyl_type = (tmp_rna_atom_sybyl_type=="F" || tmp_rna_atom_sybyl_type=="Cl" || tmp_rna_atom_sybyl_type=="Br" || tmp_rna_atom_sybyl_type=="I") ? "Ha" : tmp_rna_atom_sybyl_type;
+                const std::string& atom_pair_type = (lig_atom_sybyl_type<rna_atom_sybyl_type) ? lig_atom_sybyl_type+"-"+rna_atom_sybyl_type : rna_atom_sybyl_type+"-"+lig_atom_sybyl_type;
                 if(yw_score.contact_type.count(atom_pair_type) == 0) continue;
                 const Float& dis = (lig_atom_coord - rna_atom.get_coord()).norm();
                 if(dis > yw_score.rmax) continue;
@@ -212,7 +212,7 @@ Scoring_Function::Scoring_Function(const RNA& r, const Ligand& l, std::ostream& 
             const int actual_x_grid = atom_x_grid + gs.x;
             const int actual_y_grid = atom_y_grid + gs.y;
             const int actual_z_grid = atom_z_grid + gs.z;
-            const std::string grid_name = std::to_string(actual_x_grid)+"-"+std::to_string(actual_y_grid)+"-"+std::to_string(actual_z_grid);
+            const std::string& grid_name = std::to_string(actual_x_grid)+"-"+std::to_string(actual_y_grid)+"-"+std::to_string(actual_z_grid);
             if(this->grids.grid_map.find(grid_name)!=this->grids.grid_map.end()) {
                 this->grids.grid_map.at(grid_name).rigid_atom_mapping.push_back(rna_atom_index);
             } else {

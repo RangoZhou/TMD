@@ -2,6 +2,4 @@
 #define TMD_VERSION_MAJOR @TMD_VERSION_MAJOR@
 #define TMD_VERSION_MINOR @TMD_VERSION_MINOR@
 
-#define NDEBUG
-
-// #define WIN32
+#define @BUILD_MODE@

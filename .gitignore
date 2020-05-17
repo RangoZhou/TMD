@@ -1,3 +1,11 @@
+# cmake related
+/CMakeFiles/
+/cmake_install.cmake
+/Makefile
+/CMakeCache.txt
+
+.vscode/
+
 #lib/
 /lib/boost_1_71_0/
 /lib/boost_1_71_0.tar.bz2
@@ -9,13 +17,7 @@
 # exception to the rule
 !/bin/README.md
 
-#docking_test
-/docking_test/
-
-# cmake related
-/CMakeFiles/
-/cmake_install.cmake
-/Makefile
-/CMakeCache.txt
-
-.vscode/
+#test
+/test/docking_test/
+/test/script_test/
+/test/profile_test/

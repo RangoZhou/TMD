@@ -32,23 +32,23 @@ public:
 	Size_Type dim_2() const { return m_j; }
 };
 // //////////////////////////////////////////////////////////////////////////
-// template<typename T>
-// class triangular_matrix {
-// 	std::vector<T> m_data;
-// 	Size_Type m_dim;
-// public:
-// 	triangular_matrix();//m_dim(0)
-// 	triangular_matrix(Size_Type n, const T& filler_val);//m_data(n*(n+1)/2, filler_val), m_dim(n)
-// 	Size_Type index(Size_Type i, Size_Type j) const;//return corresponding index in vector m_data
-// 	//only upper-right triangular{i,j}
-// 	// 0  1  3  6
-// 	//    2  4  7
-// 	//       5  8
-// 	//          9
-// 	Size_Type index_permissive(Size_Type i, Size_Type j) const;//return (i < j) ? index(i, j) : index(j, i);
-// 	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
-// 	Size_Type dim() const;//return m_dim, dimension of the Matrix
-// };
+template<typename T>
+class Triangular_Matrix {
+	std::vector<T> m_data;
+	Size_Type m_dim;
+public:
+	Triangular_Matrix();//m_dim(0)
+	Triangular_Matrix(Size_Type n, const T& filler_val);//m_data(n*(n+1)/2, filler_val), m_dim(n)
+	Size_Type index(Size_Type i, Size_Type j) const;//return corresponding index in vector m_data
+	//only upper-right triangular{i,j}
+	// 0  1  3  6
+	//    2  4  7
+	//       5  8
+	//          9
+	Size_Type index_permissive(Size_Type i, Size_Type j) const;//return (i < j) ? index(i, j) : index(j, i);
+	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
+	Size_Type dim() const;//return m_dim, dimension of the Matrix
+};
 // ///////////////////////////////////////////////////////////////////////////
 // //no diagonal elements
 // template<typename T>
@@ -112,32 +112,32 @@ void Matrix<T>::append(const Matrix<T>& x, const T& filler_val) {
 
 
 
-// ////////////////////////////////////////////////////////////////////////////////////////////
-// //only upper-right triangular{i,j}
-// // 0  1  3  6
-// //    2  4  7
-// //       5  8
-// //          9
-// inline Size_Type triangular_matrix_index(Size_Type n, Size_Type i, Size_Type j) {
-// 	assert(j < n);
-// 	assert(i <= j);
-// 	return i + j*(j+1)/2;
-// }
-// //permissive
-// inline Size_Type triangular_matrix_index_permissive(Size_Type n, Size_Type i, Size_Type j) {
-// 	return (i <= j) ? triangular_matrix_index(n, i, j) : triangular_matrix_index(n, j, i);
-// }
-// //triangular_matrix
-// template<typename T>
-// triangular_matrix<T>::triangular_matrix() : m_dim(0) {}
-// template<typename T>
-// triangular_matrix<T>::triangular_matrix(Size_Type n, const T& filler_val) : m_data(n*(n+1)/2, filler_val), m_dim(n) {}
-// template<typename T>
-// Size_Type triangular_matrix<T>::index(Size_Type i, Size_Type j) const { return triangular_matrix_index(m_dim, i, j); }
-// template<typename T>
-// Size_Type triangular_matrix<T>::index_permissive(Size_Type i, Size_Type j) const { return (i < j) ? index(i, j) : index(j, i); }
-// template<typename T>
-// Size_Type triangular_matrix<T>::dim() const { return m_dim; }
+////////////////////////////////////////////////////////////////////////////////////////////
+//only upper-right triangular{i,j}
+// 0  1  3  6
+//    2  4  7
+//       5  8
+//          9
+inline Size_Type triangular_matrix_index(Size_Type n, Size_Type i, Size_Type j) {
+	assert(j < n);
+	assert(i <= j);
+	return i + j*(j+1)/2;
+}
+//permissive
+inline Size_Type triangular_matrix_index_permissive(Size_Type n, Size_Type i, Size_Type j) {
+	return (i <= j) ? triangular_matrix_index(n, i, j) : triangular_matrix_index(n, j, i);
+}
+//Triangular_Matrix
+template<typename T>
+Triangular_Matrix<T>::Triangular_Matrix() : m_dim(0) {}
+template<typename T>
+Triangular_Matrix<T>::Triangular_Matrix(Size_Type n, const T& filler_val) : m_data(n*(n+1)/2, filler_val), m_dim(n) {}
+template<typename T>
+Size_Type Triangular_Matrix<T>::index(Size_Type i, Size_Type j) const { return triangular_matrix_index(m_dim, i, j); }
+template<typename T>
+Size_Type Triangular_Matrix<T>::index_permissive(Size_Type i, Size_Type j) const { return (i < j) ? index(i, j) : index(j, i); }
+template<typename T>
+Size_Type Triangular_Matrix<T>::dim() const { return m_dim; }
 
 
 

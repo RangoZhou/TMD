@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/thread/thread.hpp> // hardware_concurrency // FIXME rm ?
+#include "TMDConfig.h"
 #include "common.h"
 #include "molecule.h"
 #include "mol2.h"
@@ -11,6 +12,10 @@
 #include "sampling.h"
 // #include "file.h"
 // #include "tee.h"
+
+#ifdef PROFILE
+#include <gperftools/profiler.h>
+#endif
 
 namespace po = boost::program_options;
 
@@ -64,6 +69,9 @@ std::string default_log(const std::string& input_path) {
 
 
 int main(int argc, char* argv[]) {
+#ifdef PROFILE
+ProfilerStart("/tmp/profile.out");
+#endif
 try {
     int seed, cpu;
     std::string rigid_path, ligand_path, flex_path, config_path, out_path, log_path;
@@ -71,12 +79,17 @@ try {
     tmd::Float box_center_x, box_center_y, box_center_z, box_size_x, box_size_y, box_size_z;
     bool help = false, help_advanced = false, version = false;
 
+    std::string sample_type, score_type, optimizer_type;
+
     po::positional_options_description positional;//remains empty
     po::options_description inputs("Input");
     inputs.add_options()
         ("receptor", po::value<std::string>(&rigid_path), "rigid part of the receptor (TMD)")
         // ("flex", po::value<std::string>(&flex_path), "flexible side chains, if any (TMD)")
         ("ligand", po::value<std::string>(&ligand_path), "ligand (TMD)")
+        ("sample_type", po::value<std::string>(&sample_type), "sampling_mode: flexible or rigid")
+        ("score_type", po::value<std::string>(&score_type), "scoring_function: yw_score, vdw_score")
+        ("optimizer_type", po::value<std::string>(&optimizer_type), "optimizer: stimulated_anealing")
     ;
     //options_description search_area("Search area (required, except with --score_only)");
     po::options_description search_area("Search space (required)");
@@ -188,6 +201,18 @@ try {
         std::cerr << "Missing ligand.\n" << "\nCorrect usage:\n" << desc_simple << std::endl;
         return 1;
     }
+    if(vm.count("sample_type") <= 0) {
+        std::cerr << "Missing sampling_mode.\n" << "\nCorrect usage:\n" << desc_simple << std::endl;
+        return 1;
+    }
+    if(vm.count("score_type") <= 0) {
+        std::cerr << "Missing scoring_function.\n" << "\nCorrect usage:\n" << desc_simple << std::endl;
+        return 1;
+    }
+    if(vm.count("optimizer_type") <= 0) {
+        std::cerr << "Missing optimizer.\n" << "\nCorrect usage:\n" << desc_simple << std::endl;
+        return 1;
+    }
     // if(cpu < 1)
     //     cpu = 1;
     if(vm.count("seed") == 0)
@@ -273,10 +298,41 @@ try {
     // log << "print initial ligand:" << std::endl;
     // ligand.write(log);
 
+    //
+    tmd::SCORE_MODE Score_Type;
+    if(score_type=="yw_score") {
+        Score_Type = tmd::YW_SCORE;
+    } else if(score_type=="vdw_ligand") {
+        Score_Type = tmd::VDW_LIGAND;
+    } else if(score_type=="vdw_rna_ligand") {
+        Score_Type = tmd::VDW_RNA_LIGAND;
+    } else if(score_type=="all") {
+        Score_Type = tmd::ALL;
+    } else {
+        assert(false);
+    }
+    log << "using " << score_type << " scoring function" << std::endl;
+    tmd::SAMPLE_MODE Sample_Type;
+    if(sample_type=="rigid") {
+        Sample_Type = tmd::SAMPLE_RIGID;
+    } else if(sample_type=="flexible") {
+        Sample_Type = tmd::SAMPLE_FLEXIBLE;
+    } else {
+        assert(false);
+    }
+    log << "using " << sample_type << " sampling mode" << std::endl;
+    tmd::OPTIMIZATION_MODE Optimizer_Type;
+    if(optimizer_type=="stimulated_anealing") {
+        Optimizer_Type = tmd::SIMULATED_ANEALING;
+    } else {
+        assert(false);
+    }
+    log << "using " << optimizer_type << " optimizer" << std::endl;
+
     log << "scoring function init..." << std::endl;
-    tmd::Scoring_Function scoring_function(rna,ligand,log);
+    tmd::Scoring_Function scoring_function(rna,ligand,Score_Type,log);
     //SCORE_TYPE is enum and it has {YW_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
-    scoring_function.set_score_type(tmd::YW_SCORE);
+    // scoring_function.set_score_type(Score_Type);
 
     if(score_only) {
         log << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
@@ -304,7 +360,7 @@ try {
         assert(false);
     }
 
-    tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),tmd::SAMPLE_RIGID,tmd::SIMULATED_ANEALING,generator,log);
+    tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),Sample_Type,Optimizer_Type,generator,log);
 
     if(randomize_only) {
         log << "finish randomize only!" << std::endl;
@@ -317,11 +373,14 @@ try {
     std::ofstream outligand_final(out_path);
     assert(outligand_final);
     unsigned int model_index = 0;
-    for(tmd::Conformer_Index ci = 0; ci < sampling.num_conformer(); ++ci) {
+    unsigned int conformer_num_step = sampling.num_conformer()/500.0;
+    for(int ci = sampling.num_conformer()-1; ci >= 0;) {
+        // std::cout << ci << " " << model_index << std::endl;
         sampling.output_conformer(ci,++model_index,outligand_final);
-        if(model_index>=500) {
-            break;
-        }
+        // if(model_index>=500) {
+        //     break;
+        // }
+        ci -= conformer_num_step;
     }
     outligand_final.close();
     log << std::endl;
@@ -356,4 +415,7 @@ catch(...) {
     return 1;
 }
 
+#ifdef PROFILE
+ProfilerStop();
+#endif
 }

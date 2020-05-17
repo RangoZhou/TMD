@@ -15,16 +15,9 @@ using Atom_Index = std::vector<Atom>::size_type;
 using Atoms = std::vector<Atom>;
 // using Ref_Atoms = std::vector<Atom>;
 // using Input_Atoms std::vector<Atom>;
-//Context stores the atom line and its position in the file content while reading
 struct Context;//forward declaration
+using Context_Index = std::vector<Context>::size_type;
 using Contexts = std::vector<Context>;
-using Context_Index = Contexts::size_type;
-struct Context {
-    Context_Index index = -1;
-    std::string c = "";
-    Context() {}
-    Context(const Context_Index ci, const std::string ct) : index(ci), c(ct) {}
-};
 
 
 enum ATOM_TYPE {SYBYL,AD4,SYBYL_AD4,AD4_SYBYL};
@@ -51,7 +44,7 @@ class Atom {
     std::string res_name = "";
     std::string chain_name = "";
     Atom_Index res_serial = -1;
-    Context context;
+    Context_Index context_index;
     Float charge = 0.0;
     // Float occupancy = 0.0;
     // Float temp_factor = 0.0;
@@ -100,112 +93,111 @@ public:
 
     //Atom constants
     // element parameter
-    const Float get_element_covalent_radius() const {
+    const Float& get_element_covalent_radius() const {
         return element_infos.at(this->el_type).covalent_radius;
     }
     // const Float get_atomic_radius() const;
-    const Float get_element_vdw_radius() const {
+    const Float& get_element_vdw_radius() const {
         return element_infos.at(this->el_type).vdw_radius;
     }
-    const std::string get_element_type_name() const {
+    const std::string& get_element_type_name() const {
         return element_infos.at(this->el_type).name;
     }
 
     // sybyl atom parameter
-    const Float get_sybyl_covalent_radius() const {
+    const Float& get_sybyl_covalent_radius() const {
         return sybyl_infos.at(this->sybyl_type).covalent_radius;
     }
     // const Float get_atomic_radius() const;
-    const Float get_sybyl_vdw_radius() const {
+    const Float& get_sybyl_vdw_radius() const {
         return sybyl_infos.at(this->sybyl_type).vdw_radius;
     }
-    const Float get_sybyl_well_depth() const {
+    const Float& get_sybyl_well_depth() const {
         return sybyl_infos.at(this->sybyl_type).well_depth;
     }
-    const Float get_sybyl_vdw_volume() const {
+    const Float& get_sybyl_vdw_volume() const {
         return sybyl_infos.at(this->sybyl_type).vdw_volume;
     }
-    const Float get_sybyl_solvation() const {
+    const Float& get_sybyl_solvation() const {
         return sybyl_infos.at(this->sybyl_type).solvation;
     }
-    const std::string get_sybyl_type_name() const {
+    const std::string& get_sybyl_type_name() const {
         return sybyl_infos.at(this->sybyl_type).name;
     }
 
     //Atom class properties
-    void set_charge(const Float c) {
+    void set_charge(const Float& c) {
         this->charge = c;
     }
-    void set_element_type(const ELEMENT_TYPE et) {
+    void set_element_type(const ELEMENT_TYPE& et) {
         this->el_type = et;
     }
-    void set_sybyl_type(const SYBYL_TYPE st) {
+    void set_sybyl_type(const SYBYL_TYPE& st) {
         this->sybyl_type = st;
     }
-    void set_ad4_type(const AD4_TYPE at) {
+    void set_ad4_type(const AD4_TYPE& at) {
         this->ad4_type = at;
     }
-    void set_coord(const Vec3d cd) {
+    void set_coord(const Vec3d& cd) {
         this->coord = cd;
     }
-    void set_name(const std::string n) {
+    void set_name(const std::string& n) {
         this->name = n;
     }
-    void set_res_name(const std::string rn) {
+    void set_res_name(const std::string& rn) {
         this->res_name = rn;
     }
-    void set_chain_name(const std::string cn) {
+    void set_chain_name(const std::string& cn) {
         this->chain_name = cn;
     }
-    void set_serial(const Atom_Index s) {
+    void set_serial(const Atom_Index& s) {
         this->serial = s;
     }
-    void set_res_serial(const Atom_Index rs) {
+    void set_res_serial(const Atom_Index& rs) {
         this->res_serial = rs;
     }
-    void set_context(const Context_Index ci, const std::string c) {
-        this->context.index = ci;
-        this->context.c = c;
+    void set_context_index(const Context_Index& ci) {
+        this->context_index = ci;
     }
 
-    void add_bond(const Bond b) {
+    void add_bond(const Bond& b) {
         this->bonds.push_back(b);
     }
 
-    const Float get_charge() const {
+    const Float& get_charge() const {
         return this->charge;
     }
-    const ELEMENT_TYPE get_element_type() const {
+    const ELEMENT_TYPE& get_element_type() const {
         return this->el_type;
     }
-    const SYBYL_TYPE get_sybyl_type() const {
+    const SYBYL_TYPE& get_sybyl_type() const {
         return this->sybyl_type;
     }
-    const AD4_TYPE get_ad4_type() const {
+    const AD4_TYPE& get_ad4_type() const {
         return this->ad4_type;
     }
-    const std::string get_name() const {
+    const std::string& get_name() const {
         return this->name;
     }
-    const std::string get_res_name() const {
+    const std::string& get_res_name() const {
         return this->res_name;
     }
-    const std::string get_chain_name() const {
+    const std::string& get_chain_name() const {
         return this->chain_name;
     }
-    const Atom_Index get_serial() const {
+    const Atom_Index& get_serial() const {
         return this->serial;
     }
-    const Atom_Index get_res_serial() const {
+    const Atom_Index& get_res_serial() const {
         return this->res_serial;
     }
-    const Context get_context() const {
-        return this->context;
+    const Context_Index& get_context_index() const {
+        return this->context_index;
     }
-    const Vec3d get_coord() const {
+    const Vec3d& get_coord() const {
         return this->coord;
     }
-    const Bonds get_bonds() const {
+    const Bonds& get_bonds() const {
         return this->bonds;
     }
 

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+cat CMakeLists.template > CMakeLists.txt
+
+if [ $# -eq 0 ]
+then
+    echo "normal build"
+    sed -i '1s/^/set (BUILD_MODE NORMAL)\n/' CMakeLists.txt
+elif [ $# -eq 1 ]
+then
+    if [ $1 == 'debug' ]
+    then
+        echo "debug build"
+        sed -i '1s/^/set (BUILD_MODE DEBUG)\n/' CMakeLists.txt
+    elif [ $1 == 'profile' ]
+    then
+        echo "profile build"
+        sed -i '1s/^/set (BUILD_MODE PROFILE)\n/' CMakeLists.txt
+    else
+        echo "unrecongnized arguments"
+        exit
+    fi
+else
+    echo "wrong number of arguments"
+    exit
+fi
+
+cmake .
+make

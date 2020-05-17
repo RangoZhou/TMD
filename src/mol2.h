@@ -39,7 +39,7 @@ namespace tmd {
 		atom.set_serial(std::stoi(atom_items[0]));
 
 		atom.set_res_serial(std::stoi(atom_items[6]));
-		atom.set_context(ci,sline);
+		atom.set_context_index(ci);
 		return atom;
 	}
 

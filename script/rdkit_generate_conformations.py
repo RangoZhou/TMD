@@ -13,9 +13,13 @@ conf_num = int(sys.argv[2])
 out_folder = sys.argv[3]
 out_put_name = sys.argv[4]
 
+if input_mol_path.find('.pdb') != -1:
+    input_mol = Chem.rdmolfiles.MolFromPDBFile(input_mol_path,removeHs=False)
+if input_mol_path.find('.mol2') != -1:
+    input_mol = Chem.rdmolfiles.MolFromMol2File(input_mol_path,removeHs=False)
 
-# input_mol = Chem.rdmolfiles.MolFromPDBFile(input_mol_path)
-input_mol = Chem.rdmolfiles.MolFromMol2File(input_mol_path,removeHs=False)
+# if input_mol.find('1Y26') != -1:
+#     input_mol.GetAtomWithIdx(0).SetNumExplicitHs(1)
 # input_mol = Chem.RemoveHs(input_mol)
 # input_mol = Chem.AddHs(input_mol)
 

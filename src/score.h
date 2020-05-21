@@ -15,141 +15,35 @@
 #include <numeric>
 #include <mutex>
 #include <cmath>
-#include <unordered_map>
+// #include <unordered_map>
 
 #include "atom.h"
 #include "matrix.h"
 #include "molecule.h"
+// #include "rl_find_pocket.h"
 // #include "progress_bar.h"
+#include "grid.h"
+#include "rl_score.h"
 
 namespace tmd {
-
-
-// struct Interacting_Pair {
-//     const Atom_Index i;
-//     const Atom_Index j;
-//     Interacting_Pair(const Atom_Index ii, const Atom_Index jj) : i(ii), j(jj) {}
-// };
-// using Interacting_Pairs = std::vector<Interacting_Pair>;
-// //precaluate interacting pairs
-// Atom_Index num_of_ligand_interacing_pairs = 0;
-// const Atom_Index num_lig_atom = lig.atom_num();
-// const Atoms& lig_atoms = lig.get_atoms_reference();
-// this->ligand_pairs.resize((num_lig_atom*(num_lig_atom-1))/2);
-// for(Atom_Index i = 0; i < num_lig_atom; ++i) {
-//     for(Atom_Index j = i+1; j < num_lig_atom; ++j) {
-//         ++num_of_ligand_interacing_pairs;
-//         const Float rij = lig_atoms[i].get_sybyl_vdw_radius() + lig_atoms[j].get_sybyl_vdw_radius();
-//         const Float eij = std::sqrt(lig_atoms[i].get_sybyl_well_depth()*lig_atoms[j].get_sybyl_well_depth());
-//         this->ligand_pairs[num_of_ligand_interacing_pairs-1] = std::move(Interacting_Pair(i,j,eij,rij));
-//     }
-// }
-
-
-// class Coefficient_Matrix {
-
-//     Triangular_Matrix<Float> vdw_ACOEFF_tri_matrix;
-//     Triangular_Matrix<Float> vdw_BCOEFF_tri_matrix;
-//     Triangular_Matrix<Float> vdw_characteristic_dis_tri_matrix;
-//     Triangular_Matrix<Float> vdw_well_depth_tri_matrix;
-
-// public:
-//     Coefficient_Matrix(const RNA& r, const Ligand& l) : vdw_ACOEFF_tri_matrix(r.atom_num()+l.atom_num(),0.0), vdw_BCOEFF_tri_matrix(r.atom_num()+l.atom_num(),0.0), vdw_characteristic_dis_tri_matrix(r.atom_num()+l.atom_num(),0.0), vdw_well_depth_tri_matrix(r.atom_num()+l.atom_num(),0.0) {
-//         Atom_Index rna_atom_num = r.atom_num();
-//         Atom_Index lig_atom_num = l.atom_num();
-//         for(Atom_Index i = 0; i < rna_atom_num; ++i) {
-//             for(Atom_Index j = 0; j < rna_atom_num; ++j) {
-//                 if(i>j) continue;
-//                 const Atom& ai = r.get_atoms_reference()[i];
-//                 const Atom& aj = r.get_atoms_reference()[j];
-//                 this->vdw_well_depth_tri_matrix(i,j) = std::sqrt(ai.get_sybyl_well_depth() * aj.get_sybyl_well_depth());
-//                 this->vdw_characteristic_dis_tri_matrix(i,j) = ai.get_sybyl_vdw_radius() + aj.get_sybyl_vdw_radius();
-//                 this->vdw_ACOEFF_tri_matrix(i,j) = this->vdw_well_depth_tri_matrix(i,j)*int_pow<12>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//                 this->vdw_BCOEFF_tri_matrix(i,j) = 2.0*this->vdw_well_depth_tri_matrix(i,j)*int_pow<6>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//             }
-//         }
-
-//         for(Atom_Index i = rna_atom_num; i < lig_atom_num+rna_atom_num; ++i) {
-//             for(Atom_Index j = rna_atom_num; j < lig_atom_num+rna_atom_num; ++j) {
-//                 if(i>j) continue;
-//                 const Atom& ai = l.get_atoms_reference()[i-rna_atom_num];
-//                 const Atom& aj = l.get_atoms_reference()[j-rna_atom_num];
-//                 this->vdw_well_depth_tri_matrix(i,j) = std::sqrt(ai.get_sybyl_well_depth() * aj.get_sybyl_well_depth());
-//                 this->vdw_characteristic_dis_tri_matrix(i,j) = ai.get_sybyl_vdw_radius() + aj.get_sybyl_vdw_radius();
-//                 this->vdw_ACOEFF_tri_matrix(i,j) = this->vdw_well_depth_tri_matrix(i,j)*int_pow<12>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//                 this->vdw_BCOEFF_tri_matrix(i,j) = 2.0*this->vdw_well_depth_tri_matrix(i,j)*int_pow<6>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//             }
-//         }
-
-//         for(Atom_Index i = 0; i < rna_atom_num; ++i) {
-//             for(Atom_Index j = rna_atom_num; j < lig_atom_num+rna_atom_num; ++j) {
-//                 if(i>j) continue;
-//                 const Atom& ai = r.get_atoms_reference()[i];
-//                 const Atom& aj = l.get_atoms_reference()[j-rna_atom_num];
-//                 this->vdw_well_depth_tri_matrix(i,j) = std::sqrt(ai.get_sybyl_well_depth() * aj.get_sybyl_well_depth());
-//                 this->vdw_characteristic_dis_tri_matrix(i,j) = ai.get_sybyl_vdw_radius() + aj.get_sybyl_vdw_radius();
-//                 this->vdw_ACOEFF_tri_matrix(i,j) = this->vdw_well_depth_tri_matrix(i,j)*int_pow<12>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//                 this->vdw_BCOEFF_tri_matrix(i,j) = 2.0*this->vdw_well_depth_tri_matrix(i,j)*int_pow<6>(this->vdw_characteristic_dis_tri_matrix(i,j));
-//             }
-//         }
-
-
-//     }
-
-// };
-
 
 struct thread_range {
     unsigned int begin;
     unsigned int end;
 };
 
-struct Grid {
-    bool flag = false;
-    std::vector<Atom_Index> rigid_atoms;
-};
-using Grid_Index = std::vector<Grid>::size_type;
-struct Grids {
-    Float width;
-    std::vector<Grid> g_data;
-    Grid_Index g_i, g_j, g_k;
-    Grid_Index shift_i, shift_j, shift_k;
-    Grid false_grid;
+class RL_Score {
+    // std::vector<lz::pocket_info> pockets;
+    lz::parameter P;
+    std::ostream& log;
 public:
-    //column-major
-    Grids() : g_i(0), g_j(0), g_k(0), shift_i(0), shift_j(0), shift_k(0), width(0) {}
-    Grids(const Grid_Index i, const Grid_Index j, const Grid_Index k, const Grid_Index si, const Grid_Index sj, const Grid_Index sk, const Float w, const Grid& filler_val) : g_data(i*j*k, filler_val), g_i(i), g_j(j), g_k(k), shift_i(si), shift_j(sj), shift_k(sk), width(w) {}
-    const Grid& operator()(Grid_Index i, Grid_Index j, Grid_Index k) const {
-        Grid_Index gi = this->index(i,j,k);
-        if(gi == -1) {
-            return this->false_grid;
-        }
-        else {
-            return g_data[this->index(i,j,k)];
-        }
+    RL_Score(std::ostream& lg) : log(lg) {}
+    const void init(const RNA& rna, const Ligand& lig) {
+        lz::rl_score_init(this->P, rna, lig);
     }
-    Grid& operator()(Grid_Index i, Grid_Index j, Grid_Index k) {
-        Grid_Index gi = this->index(i,j,k);
-        if(gi == -1) {
-            return this->false_grid;
-        }
-        else {
-            return g_data[this->index(i,j,k)];
-        }
+    const Float evaluate(const std::vector<thread_range>& tr, const RNA& rna, const Ligand& lig) {
+        return lz::rl_score_evaluate(this->P, rna, lig);
     }
-
-    Grid_Index index(Grid_Index i, Grid_Index j, Grid_Index k) const {
-        const Grid_Index& ii = i - this->shift_i;
-        const Grid_Index& jj = j - this->shift_j;
-        const Grid_Index& kk = k - this->shift_k;
-        if(kk >= g_k || kk < 0 || jj >= g_j || jj < 0 || ii >= g_i || ii < 0) {
-            return -1;
-        }
-		return ii + g_i*jj + g_i*g_j*kk; //column-major
-    }
-    Grid_Index dim_1() const { return g_i; }
-	Grid_Index dim_2() const { return g_j; }
-    Grid_Index dim_3() const { return g_k; }
 };
 
 
@@ -190,10 +84,11 @@ public:
         };
         std::map<std::string,U_Info> u_name_index_map;
         std::string sl;
-        std::ifstream u_nowfile("/home/yuanzhe/TMD/src/u_now.list",std::ios::in);
-        assert(u_nowfile);
+        std::ifstream u_file("/home/yuanzhe/TMD/src/res/u_now.list",std::ios::in);
+        assert(u_file);
         unsigned int u_file_line_count = 0;
-        while(getline(u_nowfile,sl)) {
+        while(getline(u_file,sl)) {
+            if(sl[0]=='#') continue;
             std::istringstream ss(sl);
             std::string buf;
             std::vector<std::string> token;
@@ -296,13 +191,14 @@ public:
     }
 };
 
-enum SCORE_MODE {YW_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
+enum SCORE_MODE {YW_SCORE,RL_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
 class Scoring_Function {
     const RNA& rna;
     const Ligand& lig;
     SCORE_MODE Score_Mode;
     // VDW_Score vdw_score;
     YW_Score yw_score;
+    RL_Score rl_score;
     unsigned int num_thread = 0;
     std::vector<thread_range> thread_ranges;
     std::ostream& log;
@@ -312,7 +208,7 @@ public:
     friend YW_Score;
     // friend VDW_Score;
     //initiate
-    Scoring_Function(const RNA& r, const Ligand& l, const SCORE_MODE& sm, std::ostream& lg) : rna(r), lig(l), Score_Mode(sm), log(lg), yw_score(lg) {
+    Scoring_Function(const RNA& r, const Ligand& l, const SCORE_MODE& sm, std::ostream& lg) : rna(r), lig(l), Score_Mode(sm), log(lg), yw_score(lg), rl_score(lg) {
     //thread information
         this->log << "rna atom num: " << r.atom_num() << " ligand atom num: " << lig.atom_num() << std::endl;
         this->num_thread = std::thread::hardware_concurrency();
@@ -357,6 +253,9 @@ public:
             case YW_SCORE:
                 this->yw_score = YW_Score(r,l,10.0,0.2,lg);
                 this->initialize_grids(r,this->yw_score.rmax,2.0);
+                break;
+            case RL_SCORE:
+                this->rl_score.init(r,l);
                 break;
             case VDW_LIGAND:
                 // this->
@@ -470,6 +369,9 @@ public:
         switch(this->Score_Mode) {
             case YW_SCORE:
                 return this->yw_score.evaluate(this->thread_ranges,this->rna,this->lig,this->grids);
+                break;
+            case RL_SCORE:
+                return this->rl_score.evaluate(this->thread_ranges,this->rna,this->lig);
                 break;
             case VDW_LIGAND:
                 // return this->vdw_score.evaluate(this->thread_ranges,this->lig,this->ligand_pairs);

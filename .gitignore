@@ -17,7 +17,14 @@
 # exception to the rule
 !/bin/README.md
 
+#script
+/script/*.pyc
+
+#src
+/src/doc/
+
 #test
 /test/docking_test/
 /test/script_test/
 /test/profile_test/
+/test/rl_score_test/

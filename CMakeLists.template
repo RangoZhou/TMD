@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 3.5)
-set(CMAKE_CXX_FLAGS   "-std=c++17")  # c++17
 
 project(TMD)
 # The version number.
@@ -41,16 +40,19 @@ set(TMD_SOURCE_FILES ${TMD_SOURCE_DIR}/main.cpp ${TMD_SRCS})
 # add the executable
 # link library
 if(${BUILD_MODE} STREQUAL "NORMAL")
+set(CMAKE_CXX_FLAGS "-O3 -std=c++17")
 add_executable(tmd ${TMD_SOURCE_FILES})
 target_link_libraries(tmd ${LINKED_LIBS})
 endif()
 
 if(${BUILD_MODE} STREQUAL "DEBUG")
+set(CMAKE_CXX_FLAGS "-std=c++17")
 add_executable(tmd_debug ${TMD_SOURCE_FILES})
 target_link_libraries(tmd_debug ${LINKED_LIBS})
 endif()
 
 if(${BUILD_MODE} STREQUAL "PROFILE")
+set(CMAKE_CXX_FLAGS "-O3 -std=c++17")
 add_executable(tmd_profile ${TMD_SOURCE_FILES})
 target_link_libraries(tmd_profile ${LINKED_LIBS} "-lprofiler")
 endif()

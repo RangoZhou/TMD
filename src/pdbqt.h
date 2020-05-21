@@ -12,7 +12,7 @@
 
 namespace tmd {
 
-	enum PDBQT_PARSE_TYPE {PDBQT_ROOT,PDBQT_ENDROOT,PDBQT_BRANCH,PDBQT_ENDBRANCH,PDBQT_TORSDOF,PDBQT_REMARK,PDBQT_ATOM,PDBQT_HETATM,PDBQT_UNKNOWN};
+	enum PDBQT_PARSE_TYPE {PDBQT_ROOT,PDBQT_ENDROOT,PDBQT_BRANCH,PDBQT_ENDBRANCH,PDBQT_TORSDOF,PDBQT_REMARK,PDBQT_ATOM,PDBQT_HETATM,PDBQT_BOND,PDBQT_UNKNOWN};
 
 	//store each atom's information while parsing the input file
 	struct Atom_Tag {
@@ -39,6 +39,7 @@ namespace tmd {
 		else if(r=="ROOT") return PDBQT_ROOT;
 		else if(r=="ENDROOT") return PDBQT_ENDROOT;
 		else if(r=="TORSDOF") return PDBQT_TORSDOF;
+		else if(r=="<TRIPOS>BOND") return PDBQT_BOND;
 		else return PDBQT_UNKNOWN;
 	}
 
@@ -53,6 +54,41 @@ namespace tmd {
 	// const std::regex r_BRANCH_ = std::regex("^(BRANCH)");
 	// const std::regex r_ENDBRANCH_ = std::regex("^(ENDBRANCH)");
 	// const std::regex r_TORSDOF_ = std::regex("^(TORSDOF)");
+
+	struct Bond_Info {
+		Atom_Index a1;
+		Atom_Index a2;
+		BOND_TYPE bt;
+		Bond_Info(const Atom_Index aa1, const Atom_Index aa2, const BOND_TYPE bbt) : a1(aa1), a2(aa2), bt(bbt) {}
+	};
+
+	inline const Bond_Info parse_pdbqt_bond_and_add_bond(const std::string& sline) {
+		const std::vector<std::string> vs = string2vector(sline);
+		assert(vs.size()==5 || vs.size()==6);
+		Atom_Index a1 = std::stoi(vs[2])-1;
+		Atom_Index a2 = std::stoi(vs[3])-1;
+		BOND_TYPE bt;
+		if(vs[4]=="1") {
+			bt = SINGLE_BOND;
+		} else if(vs[4]=="2") {
+			bt = DOUBLE_BOND;
+		} else if(vs[4]=="3") {
+			bt = TRIPLE_BOND;
+		} else if(vs[4]=="am") {
+			bt = AMIDE_BOND;
+		} else if(vs[4]=="ar") {
+			bt = AROMATIC_BOND;
+		} else if(vs[4]=="du") {
+			bt = DUMMY_BOND;
+		} else if(vs[4]=="un") {
+			bt = UNKNOWN_BOND;
+		} else if(vs[4]=="nc") {
+			bt = NOT_CONNECTED_BOND;
+		} else {
+			assert(false);
+		}
+		return Bond_Info(a1,a2,bt);
+	}
 
 	inline const Node_Info parse_pdbqt_branch(const std::string &sline, const Node_Id& ni) {
 		// std::smatch results;
@@ -81,7 +117,7 @@ namespace tmd {
 		// log << trim(sline.substr(6,5)) << " " << trim( sline.substr(22,4)) << std::endl;
 		atom.set_serial(std::stoi(trim(sline.substr(6,5))));
 
-		const std::string res_serial_str = trim( sline.substr(22,4));
+		const std::string res_serial_str = trim(sline.substr(22,4));
 		if(res_serial_str!="") {
 			atom.set_res_serial(std::stoi(res_serial_str));
 		} else {
@@ -114,32 +150,32 @@ namespace tmd {
 			switch(ppt) {
 				case PDBQT_ATOM:
 				case PDBQT_HETATM: {
-					const Atom a = parse_pdbqt_atom(line_index,sline);
-					Atom_Index a_i = ligand.add_atom(a);
-					if(a_i==0) {
-						//make sure ligand atom start from 1
-						assert(a.get_serial()==1);
+						const Atom a = parse_pdbqt_atom(line_index,sline);
+						Atom_Index a_i = ligand.add_atom(a);
+						if(a_i==0) {
+							//make sure ligand atom start from 1
+							assert(a.get_serial()==1);
+						}
+						Atom_Index r_a_i = ligand.add_ref_atom(a);
+						assert(a_i == r_a_i);
+						Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
+						atom_tags.push_back(Atom_Tag(a_i,ni));
+						assert(a_i==atom_tags.size()-1);
 					}
-					Atom_Index r_a_i = ligand.add_ref_atom(a);
-					assert(a_i == r_a_i);
-					Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
-					atom_tags.push_back(Atom_Tag(a_i,ni));
-					assert(a_i==atom_tags.size()-1);
 					break;
-				}
 				case PDBQT_BRANCH: {
-					++depth_level;
-					if(width_in_each_depth.size() <= depth_level) {
-						width_in_each_depth.push_back(0);
-					} else {
-						++width_in_each_depth[depth_level];
+						++depth_level;
+						if(width_in_each_depth.size() <= depth_level) {
+							width_in_each_depth.push_back(0);
+						} else {
+							++width_in_each_depth[depth_level];
+						}
+						Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
+						Node_Info bni = parse_pdbqt_branch(sline, ni);
+						node_infos.push_back(bni);
+						node_id_to_node_index.insert({std::to_string(depth_level)+"-"+std::to_string(width_in_each_depth[depth_level]), node_infos.size()-1});
 					}
-					Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
-					Node_Info bni = parse_pdbqt_branch(sline, ni);
-					node_infos.push_back(bni);
-					node_id_to_node_index.insert({std::to_string(depth_level)+"-"+std::to_string(width_in_each_depth[depth_level]), node_infos.size()-1});
 					break;
-				}
 				case PDBQT_ENDBRANCH:
 					--depth_level;
 					assert(depth_level>=0);
@@ -159,6 +195,21 @@ namespace tmd {
 					break;
 				case PDBQT_REMARK:
 					;
+					break;
+				case PDBQT_BOND: {
+						log << "atom size: " << ligand.atoms.size() << " bond: " << sline << std::endl;
+						Bond_Info bi = parse_pdbqt_bond_and_add_bond(sline);
+						if(bi.bt != NOT_CONNECTED_BOND && bi.bt != NONE_BOND) {
+							Bond b1(bi.a2,bi.bt);
+							Bond b2(bi.a1,bi.bt);
+							assert(bi.a1 <= ligand.atoms.size());
+							assert(bi.a2 <= ligand.atoms.size());
+							ligand.atoms[bi.a1].add_bond(b1);
+							ligand.atoms[bi.a2].add_bond(b2);
+							ligand.ref_atoms[bi.a1].add_bond(b1);
+							ligand.ref_atoms[bi.a2].add_bond(b2);
+						}
+					}
 					break;
 				case PDBQT_UNKNOWN:
 				default:
@@ -224,6 +275,16 @@ namespace tmd {
 			n.set_rot_axis(rot_axis);
 			n.set_rot_angle(0.0);
 		}
+
+		//set ref heavy atom center
+		Atoms ref_heavy_atoms;
+		for(const auto& ha : ligand.ref_atoms) {
+			if(ha.get_element_type() != EL_H) {
+				ref_heavy_atoms.push_back(ha);
+			}
+		}
+		ligand.ref_heavy_atoms_center = (1.0/Float(ref_heavy_atoms.size())) * std::accumulate( ref_heavy_atoms.begin(),ref_heavy_atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b) {return a + b.get_coord();} );
+		// ligand.ref_heavy_atoms_center = (1.0/Float(ligand.ref_atoms.size())) * std::accumulate( ligand.ref_atoms.begin(),ligand.ref_atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b) {return a + b.get_coord();} );
 	}
 
 }

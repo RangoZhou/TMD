@@ -49,34 +49,34 @@ public:
 	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
 	Size_Type dim() const;//return m_dim, dimension of the Matrix
 };
-// ///////////////////////////////////////////////////////////////////////////
-// //no diagonal elements
-// template<typename T>
-// class strictly_triangular_matrix {
-// 	std::vector<T> m_data;
-// 	Size_Type m_dim;
-// public:
-// 	strictly_triangular_matrix();//m_dim(0)
-// 	strictly_triangular_matrix(Size_Type n, const T& filler_val);//m_data(n*(n-1)/2, filler_val), m_dim(n)
-// 	Size_Type index(Size_Type i, Size_Type j) const;//return corresponding index in vector m_data
-// 	Size_Type index_permissive(Size_Type i, Size_Type j) const;//return (i < j) ? index(i, j) : index(j, i);
-// 	void resize(Size_Type n, const T& filler_val);//resize m_data to has only the upper right Matrix elements, new sizes should be the same or greater than the old, preserves original data
-// 	void append(const strictly_triangular_matrix<T>& m, const T& filler_val);//append Matrix x through the diagonal, it is a Matrix with two diagonal Matrix blocks
-// 	void append(const Matrix<T>& rectangular, const strictly_triangular_matrix<T>& triangular);//arguments rectangular and triangular must have the same dim
-// 	//if(rectangular.dim_2() == 0) do nothing
-// 	//if(rectangular.dim_1() == 0) assign argument triangular to this object
-// 	//else append these three matrices like the following
-// 	// i  i  i  r  r  r  r
-// 	//    i  i  r  r  r  r
-// 	//       i  r  r  r  r
-// 	//          t  t  t  t
-// 	//             t  t  t
-// 	//                t  t
-// 	//                   t
-// 	//where i,r,t are this, rectangular and triangular, respectively.
-// 	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
-// 	Size_Type dim() const;//return m_dim, dimension of the Matrix
-// };
+///////////////////////////////////////////////////////////////////////////
+//no diagonal elements
+template<typename T>
+class Strictly_Triangular_Matrix {
+	std::vector<T> m_data;
+	Size_Type m_dim;
+public:
+	Strictly_Triangular_Matrix();//m_dim(0)
+	Strictly_Triangular_Matrix(Size_Type n, const T& filler_val);//m_data(n*(n-1)/2, filler_val), m_dim(n)
+	Size_Type index(Size_Type i, Size_Type j) const;//return corresponding index in vector m_data
+	Size_Type index_permissive(Size_Type i, Size_Type j) const;//return (i < j) ? index(i, j) : index(j, i);
+	void resize(Size_Type n, const T& filler_val);//resize m_data to has only the upper right Matrix elements, new sizes should be the same or greater than the old, preserves original data
+	void append(const Strictly_Triangular_Matrix<T>& m, const T& filler_val);//append Matrix x through the diagonal, it is a Matrix with two diagonal Matrix blocks
+	void append(const Matrix<T>& rectangular, const Strictly_Triangular_Matrix<T>& triangular);//arguments rectangular and triangular must have the same dim
+	//if(rectangular.dim_2() == 0) do nothing
+	//if(rectangular.dim_1() == 0) assign argument triangular to this object
+	//else append these three matrices like the following
+	// i  i  i  r  r  r  r
+	//    i  i  r  r  r  r
+	//       i  r  r  r  r
+	//          t  t  t  t
+	//             t  t  t
+	//                t  t
+	//                   t
+	//where i,r,t are this, rectangular and triangular, respectively.
+	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
+	Size_Type dim() const;//return m_dim, dimension of the Matrix
+};
 #undef TMD_MATRIX_DEFINE_OPERATORS
 
 
@@ -141,31 +141,31 @@ Size_Type Triangular_Matrix<T>::dim() const { return m_dim; }
 
 
 
-// ////////////////////////////////////////////////////////////////////////////////////////////
-// //strictly_triangular_matrix
-// template<typename T>
-// strictly_triangular_matrix<T>::strictly_triangular_matrix() : m_dim(0) {}
-// template<typename T>
-// strictly_triangular_matrix<T>::strictly_triangular_matrix(Size_Type n, const T& filler_val) : m_data(n*(n-1)/2, filler_val), m_dim(n) {}
-// template<typename T>
-// Size_Type strictly_triangular_matrix<T>::index(Size_Type i, Size_Type j) const {
-// 	assert(j < m_dim);
-// 	assert(i < j);
-// 	assert(j >= 1); // by implication, really
-// 	return i + j*(j-1)/2;
-// }
-// template<typename T>
-// Size_Type strictly_triangular_matrix<T>::index_permissive(Size_Type i, Size_Type j) const { return (i < j) ? index(i, j) : index(j, i); }
+////////////////////////////////////////////////////////////////////////////////////////////
+//Strictly_Triangular_Matrix
+template<typename T>
+Strictly_Triangular_Matrix<T>::Strictly_Triangular_Matrix() : m_dim(0) {}
+template<typename T>
+Strictly_Triangular_Matrix<T>::Strictly_Triangular_Matrix(Size_Type n, const T& filler_val) : m_data(n*(n-1)/2, filler_val), m_dim(n) {}
+template<typename T>
+Size_Type Strictly_Triangular_Matrix<T>::index(Size_Type i, Size_Type j) const {
+	assert(j < m_dim);
+	assert(i < j);
+	assert(j >= 1); // by implication, really
+	return i + j*(j-1)/2;
+}
+template<typename T>
+Size_Type Strictly_Triangular_Matrix<T>::index_permissive(Size_Type i, Size_Type j) const { return (i < j) ? index(i, j) : index(j, i); }
 
+template<typename T>
+void Strictly_Triangular_Matrix<T>::resize(Size_Type n, const T& filler_val) {
+	if(n == m_dim) return; // no-op
+	assert(n > m_dim);
+	m_dim = n;
+	m_data.resize(n*(n-1)/2, filler_val); // preserves original data
+}
 // template<typename T>
-// void strictly_triangular_matrix<T>::resize(Size_Type n, const T& filler_val) {
-// 	if(n == m_dim) return; // no-op
-// 	assert(n > m_dim);
-// 	m_dim = n;
-// 	m_data.resize(n*(n-1)/2, filler_val); // preserves original data
-// }
-// template<typename T>
-// void strictly_triangular_matrix<T>::append(const strictly_triangular_matrix<T>& m, const T& filler_val) {
+// void Strictly_Triangular_Matrix<T>::append(const Strictly_Triangular_Matrix<T>& m, const T& filler_val) {
 // 	Size_Type n = dim();
 // 	resize(n + m.dim(), filler_val);
 // 	for(Size_Type i = 0; i < m.dim(); ++i) {
@@ -175,7 +175,7 @@ Size_Type Triangular_Matrix<T>::dim() const { return m_dim; }
 // 	}
 // }
 // template<typename T>
-// void strictly_triangular_matrix<T>::append(const Matrix<T>& rectangular, const strictly_triangular_matrix<T>& triangular) {
+// void Strictly_Triangular_Matrix<T>::append(const Matrix<T>& rectangular, const Strictly_Triangular_Matrix<T>& triangular) {
 // 	assert(dim() == rectangular.dim_1());
 // 	assert(rectangular.dim_2() == triangular.dim());
 // 	// a filler value is needed by append or resize
@@ -197,7 +197,7 @@ Size_Type Triangular_Matrix<T>::dim() const { return m_dim; }
 // 	}
 // }
 // template<typename T>
-// Size_Type strictly_triangular_matrix<T>::dim() const { return m_dim; }
+// Size_Type Strictly_Triangular_Matrix<T>::dim() const { return m_dim; }
 
 
 }

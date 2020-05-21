@@ -41,6 +41,8 @@ class Sampling {
     RNGType& generator;
     std::ostream& log;
 
+    Float min_score = k_max_float;
+
 public:
     Sampling(const RNA& r, Ligand& l, Scoring_Function& sf, const Box& b, SAMPLE_MODE s_mode, OPTIMIZATION_MODE o_mode, RNGType& g, std::ostream& lg) : rna(r), lig(l), score_func(sf), docking_box(b), Sample_Mode(s_mode), Optimization_Mode(o_mode), generator(g), log(lg) {}
 
@@ -79,9 +81,10 @@ public:
             const Float& y = cf[1];
             const Float& z = cf[2];
             const Box& b = this->docking_box;
+            const Vec3d& ref_center = this->lig.get_ref_heavy_center_coord();
             //corner1 is the lower corner
-            if( x < b.corner1[0] || y < b.corner1[1] || z < b.corner1[2] ||
-                x > b.corner2[0] || y > b.corner2[1] || z > b.corner2[2] ) {
+            if( (x+ref_center[0]) < b.corner1[0] || (y+ref_center[1]) < b.corner1[1] || (z+ref_center[2]) < b.corner1[2] ||
+                (x+ref_center[0]) > b.corner2[0] || (y+ref_center[1]) > b.corner2[1] || (z+ref_center[2]) > b.corner2[2] ) {
                 return k_max_float;
             }
 
@@ -102,9 +105,11 @@ public:
         }
 
         const Float s = score_func.evaluate();
-        if(s < 0) {
+
+        if(s < this->min_score) {
             this->conformers.push_back(Conformer(s,this->lig.rmsd_with_respect_to_ref_atoms(),this->lig.get_atoms()));
             Conformer_Index ci = this->conformers.size() - 1;
+            this->min_score = s;
         }
         return s;
     }
@@ -130,7 +135,7 @@ public:
         while(score_of_randomized>0.0) {
             static unsigned int randomized_times = 0;
             randomized_times++;
-            const tmd::Vec3d random_xyz = tmd::random_in_box(this->docking_box.corner1, this->docking_box.corner2, generator) + this->docking_box.center - this->lig.get_ref_center_coord();
+            const tmd::Vec3d random_xyz = tmd::random_in_box(this->docking_box.corner1, this->docking_box.corner2, generator) - this->lig.get_ref_heavy_center_coord();
             const tmd::Vec3d random_root_rot_vector = tmd::random_unit_vec3d(generator) * tmd::random_double(-tmd::k_pi, tmd::k_pi, generator);
             start_dofs[0] = random_xyz[0];
             start_dofs[1] = random_xyz[1];
@@ -161,13 +166,13 @@ public:
         return start_dofs;
     }
     void docking() {
-        unsigned int docking_times = 1;
+        unsigned int docking_times = 5;
         const Floats start_dofs = this->get_randomized_dofs();
 
         // tmd::Float characteristic_score = (*this)(start_dofs);
 
         VecDoub dels(start_dofs.size(),0.01);
-        Doub ftol = 0.001;
+        Doub ftol = 0.1;
         VecDoub dofs(start_dofs.size(),0.0);
         for(Floats::size_type i = 0; i < start_dofs.size(); ++i) {
             dofs[i] = start_dofs[i];
@@ -175,10 +180,13 @@ public:
         Amebsa<tmd::Sampling> amebsa(dofs, dels, (*this), ftol);
 
         for(unsigned int docking_time = 1; docking_time <= docking_times; ++docking_time) {
-            Doub temperature = 100;
+            Doub temperature = 1000;
             Bool converged = false;
             while(!converged) {
-                Int Iter = 1000;
+                Int Iter = 100;
+                if(docking_times >= 3) {
+                    Iter = 1000;
+                }
                 // if(temperature>=std::abs(characteristic_score/2.0) && temperature<=std::abs(characteristic_score*1.5)) {
                 //     Iter = 10000;
                 // }
@@ -198,6 +206,9 @@ public:
             assert(tmd::eq(amebsa.yb,final_score));
             this->log << "min score: " << amebsa.yb << std::endl;
             this->log << "min score's rmsd: " << this->lig.rmsd_with_respect_to_ref_atoms() << std::endl;
+            if(this->lig.rmsd_with_respect_to_ref_atoms()<=2.0 && docking_time == docking_times) {
+                std::cout << "successful" << std::endl;
+            }
             // characteristic_score = final_score;
         }
     }

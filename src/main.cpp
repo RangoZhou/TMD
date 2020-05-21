@@ -302,6 +302,8 @@ try {
     tmd::SCORE_MODE Score_Type;
     if(score_type=="yw_score") {
         Score_Type = tmd::YW_SCORE;
+    } else if(score_type=="rl_score") {
+        Score_Type = tmd::RL_SCORE;
     } else if(score_type=="vdw_ligand") {
         Score_Type = tmd::VDW_LIGAND;
     } else if(score_type=="vdw_rna_ligand") {
@@ -334,12 +336,6 @@ try {
     //SCORE_TYPE is enum and it has {YW_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
     // scoring_function.set_score_type(Score_Type);
 
-    if(score_only) {
-        log << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
-        log << "finish score only!" << std::endl;
-        return 0;
-    }
-
     tmd::Vec3d center;
     tmd::Vec3d corner1;
     tmd::Vec3d corner2;
@@ -356,14 +352,30 @@ try {
         log << " ";
         tmd::print(corner2, log);
         log << std::endl;
-    } else {
-        assert(false);
     }
+
+    // corner1 = tmd::Vec3d(-8/2.0, -8/2.0, -8/2.0) + center;
+    // corner2 = tmd::Vec3d(8/2.0, 8/2.0, 8/2.0) + center;
+    // std::ofstream outligand(out_path);
+    // tmd::Floats ff(ligand.dof_num(),0.0);
+    // ff[6] = tmd::k_pi;
+    // // ff[7] = tmd::k_pi;
+    // ligand.sample(ff,tmd::LIGAND_SAMPLE_FLEXIBLE);
+    // std::cout << ligand.rmsd_with_respect_to_ref_atoms() << std::endl;
+    // ligand.write(outligand);
+    // outligand.close();
+    // exit(2);
 
     tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),Sample_Type,Optimizer_Type,generator,log);
 
     if(randomize_only) {
         log << "finish randomize only!" << std::endl;
+        return 0;
+    }
+
+    if(score_only) {
+        log << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
+        log << "finish score only!" << std::endl;
         return 0;
     }
 
@@ -373,13 +385,13 @@ try {
     std::ofstream outligand_final(out_path);
     assert(outligand_final);
     unsigned int model_index = 0;
-    unsigned int conformer_num_step = sampling.num_conformer()/500.0;
+    unsigned int conformer_num_step = sampling.num_conformer() < 500 ? 1 : sampling.num_conformer()/500.0;
     for(int ci = sampling.num_conformer()-1; ci >= 0;) {
         // std::cout << ci << " " << model_index << std::endl;
         sampling.output_conformer(ci,++model_index,outligand_final);
-        // if(model_index>=500) {
-        //     break;
-        // }
+        if(model_index>=500) {
+            break;
+        }
         ci -= conformer_num_step;
     }
     outligand_final.close();

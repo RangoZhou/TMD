@@ -241,6 +241,8 @@ class Ligand {
     // DOFs dofs;//degrees of freedom: translational dof x,y,z (3) + rotational dof rot_axis,rot_angle (3) + ligand rotational dof len(nodes)-1 (3)// root rot_axis has a constraint which is normal
     Contexts contexts;
 
+    Vec3d ref_heavy_atoms_center;//default constructor should be not_a_num
+
     const Atom_Index add_atom(const Atom a) {
         this->atoms.push_back(a);
         return (this->atoms.size()-1);
@@ -321,26 +323,31 @@ public:
         return this->contexts;
     }
 
+    const Vec3d& get_ref_heavy_center_coord() const {
+        return this->ref_heavy_atoms_center;
+    }
+
     void translate(const Vec3d shift) {
         //check if ref_atoms and atoms contain same num of atoms
         assert(this->atoms.size()==this->ref_atoms.size());
         //first, ligand translation
-        for(auto& a : atoms) {
+        for(auto& a : this->atoms) {
             a.set_coord(a.get_coord()+shift);
         }
     }
 
-    void rotate(const Vec3d rot_axis, const Float rot_angle) {
+    void rotate(const Vec3d rot_origin, const Vec3d rot_axis, const Float rot_angle) {
         //check if ref_atoms and atoms contain same num of atoms
         assert(this->atoms.size()==this->ref_atoms.size());
 
         this->nodes[0].conf.rot_angle = rot_angle;
         this->nodes[0].conf.rot_axis = rot_axis;
 
-        this->nodes[0].conf.origin = std::accumulate(this->atoms.begin(),this->atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b){return a + b.get_coord();})*(1.0/Float(this->atoms.size()));
-        assert(atoms.size()!=0);//recalculate the center of the ligand, and assign that to root conf.origin
+        // this->nodes[0].conf.origin = std::accumulate(this->atoms.begin(),this->atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b){return a + b.get_coord();})*(1.0/Float(this->atoms.size()));
+        this->nodes[0].conf.origin = rot_origin;
+        assert(this->atoms.size()!=0);//recalculate the center of the ligand, and assign that to root conf.origin
         //rot_axis and rot_angle are sampled from other place
-        this->nodes[0].transitive_transform(this->nodes[0].conf.origin, this->nodes[0].conf.rot_axis, this->nodes[0].conf.rot_angle, atoms);
+        this->nodes[0].transitive_transform(this->nodes[0].conf.origin, this->nodes[0].conf.rot_axis, this->nodes[0].conf.rot_angle, this->atoms);
     }
 
     void transform(const Floats torsional_dofs) {
@@ -369,18 +376,19 @@ public:
     void sample(const Floats& dofs, const LIGAND_SAMPLE_MODE& l_mode) {
         this->reset_atoms_coord_to_ref_atoms_coord();
         assert(dofs.size() >= 6);
-        const Vec3d shift = Vec3d(dofs[0],dofs[1],dofs[2]) - this->get_ref_center_coord();
+        const Vec3d shift = Vec3d(dofs[0],dofs[1],dofs[2]);
         this->translate(shift);
 
+        const Vec3d rot_origin = this->ref_heavy_atoms_center + shift;
         const Vec3d rot_vector(dofs[3],dofs[4],dofs[5]);
         const Float rot_angle = rot_vector.norm();
         if(eq(std::abs(rot_angle),0.0)) {
             const Vec3d rot_axis(0,0,1);
-            this->rotate(rot_axis, rot_angle);
+            this->rotate(rot_origin, rot_axis, 0.0);
         } else {
             const Vec3d rot_axis = rot_vector * (1.0/rot_angle);
             assert(eq(rot_axis.norm(),1.0));
-            this->rotate(rot_axis, rot_angle);
+            this->rotate(rot_origin, rot_axis, rot_angle);
         }
 
         if(l_mode == LIGAND_SAMPLE_FLEXIBLE) {

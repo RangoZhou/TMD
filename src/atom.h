@@ -22,13 +22,18 @@ using Contexts = std::vector<Context>;
 
 enum ATOM_TYPE {SYBYL,AD4,SYBYL_AD4,AD4_SYBYL};
 
+enum BOND_TYPE {SINGLE_BOND,DOUBLE_BOND,TRIPLE_BOND,AMIDE_BOND,AROMATIC_BOND,DUMMY_BOND,UNKNOWN_BOND,NOT_CONNECTED_BOND,NONE_BOND};
 class Bond {
-    Atom_Index to_index;
+    Atom_Index bond_atom_index;
+    BOND_TYPE Bond_Type;
 public:
-    Bond() : to_index(-1) {}
-    Bond(const Atom_Index ai) : to_index(ai) {}
+    // Bond() : to_index(-1) {}
+    Bond(const Atom_Index ai, const BOND_TYPE bt) : bond_atom_index(ai), Bond_Type(bt) {}
     const Atom_Index get_bonded_atom_index() const {
-        return this->to_index;
+        return this->bond_atom_index;
+    }
+    const BOND_TYPE get_bond_type() const {
+        return this->Bond_Type;
     }
 };
 using Bonds = std::vector<Bond>;

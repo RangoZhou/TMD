@@ -1,4 +1,4 @@
-set (BUILD_MODE NORMAL)
+set (BUILD_MODE PROFILE)
 cmake_minimum_required (VERSION 3.5)
 
 project(TMD)
@@ -47,7 +47,7 @@ target_link_libraries(tmd ${LINKED_LIBS})
 endif()
 
 if(${BUILD_MODE} STREQUAL "DEBUG")
-set(CMAKE_CXX_FLAGS "-std=c++17")
+set(CMAKE_CXX_FLAGS "-g -std=c++17")
 add_executable(tmd_debug ${TMD_SOURCE_FILES})
 target_link_libraries(tmd_debug ${LINKED_LIBS})
 endif()

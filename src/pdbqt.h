@@ -16,16 +16,16 @@ namespace tmd {
 
 	//store each atom's information while parsing the input file
 	struct Atom_Tag {
-		Atom_Index atom_index;
+		int atom_index;
 		Node_Id node_id;
-		Atom_Tag(const Atom_Index ai, const Node_Id& ni) : atom_index(ai), node_id(ni) {}
+		Atom_Tag(const int ai, const Node_Id& ni) : atom_index(ai), node_id(ni) {}
 	};
 	//store each node's connection information
 	struct Node_Info {
-		Atom_Index parent_bond_atom_index;
-		Atom_Index self_bond_atom_index;
+		int parent_bond_atom_index;
+		int self_bond_atom_index;
 		Node_Id node_id;
-		Node_Info(const Atom_Index pbai, const Atom_Index sbai, const Node_Id& ni) : parent_bond_atom_index(pbai), self_bond_atom_index(sbai), node_id(ni) {}
+		Node_Info(const int pbai, const int sbai, const Node_Id& ni) : parent_bond_atom_index(pbai), self_bond_atom_index(sbai), node_id(ni) {}
 	};
 
 	inline const PDBQT_PARSE_TYPE to_pdbqt_parse_type(const std::string s) {
@@ -56,17 +56,17 @@ namespace tmd {
 	// const std::regex r_TORSDOF_ = std::regex("^(TORSDOF)");
 
 	struct Bond_Info {
-		Atom_Index a1;
-		Atom_Index a2;
+		int a1;
+		int a2;
 		BOND_TYPE bt;
-		Bond_Info(const Atom_Index aa1, const Atom_Index aa2, const BOND_TYPE bbt) : a1(aa1), a2(aa2), bt(bbt) {}
+		Bond_Info(const int aa1, const int aa2, const BOND_TYPE bbt) : a1(aa1), a2(aa2), bt(bbt) {}
 	};
 
 	inline const Bond_Info parse_pdbqt_bond_and_add_bond(const std::string& sline) {
 		const std::vector<std::string> vs = string2vector(sline);
 		assert(vs.size()==5 || vs.size()==6);
-		Atom_Index a1 = std::stoi(vs[2])-1;
-		Atom_Index a2 = std::stoi(vs[3])-1;
+		int a1 = std::stoi(vs[2])-1;
+		int a2 = std::stoi(vs[3])-1;
 		BOND_TYPE bt;
 		if(vs[4]=="1") {
 			bt = SINGLE_BOND;
@@ -102,7 +102,7 @@ namespace tmd {
 		return Node_Info(std::stoi(vs[1])-1, std::stoi(vs[2])-1, ni);
 	}
 
-	inline const Atom parse_pdbqt_atom(const Context_Index& ci, const std::string &sline) {
+	inline const Atom parse_pdbqt_atom(const int& ci, const std::string &sline) {
 		const std::string autodock_atom_type = trim(sline.substr(77,2));
 		const std::string sybyl_atom_type = trim(sline.substr(82,5));
 		Atom atom(sybyl_atom_type,autodock_atom_type,SYBYL_AD4);
@@ -114,7 +114,7 @@ namespace tmd {
 		atom.set_name(trim(sline.substr(12,4)));
 		atom.set_res_name(trim(sline.substr(17,3)));
 		atom.set_chain_name(sline.substr(21,1));
-		// log << trim(sline.substr(6,5)) << " " << trim( sline.substr(22,4)) << std::endl;
+		// tee << trim(sline.substr(6,5)) << " " << trim( sline.substr(22,4)) << std::endl;
 		atom.set_serial(std::stoi(trim(sline.substr(6,5))));
 
 		const std::string res_serial_str = trim(sline.substr(22,4));
@@ -130,33 +130,35 @@ namespace tmd {
 
 
 
-	inline void read_ligand_pdbqt(const std::string ligand_path, Ligand& ligand, std::ofstream& log) {
+	inline void read_ligand_pdbqt(const std::string ligand_path, Ligand& ligand, std::ofstream& tee) {
 		std::ifstream in_ligand(ligand_path);
 		assert(in_ligand);
 		std::string sline;
 
 		//put atom into ligand and gather tree information
-		Node_Index depth_level = 0;
-		std::vector<Node_Index> width_in_each_depth;
+		int depth_level = 0;
+		std::vector<int> width_in_each_depth;
 		std::vector<Atom_Tag> atom_tags;
 		std::vector<Node_Info> node_infos;
-		std::map<std::string,Node_Index> node_id_to_node_index;
+		std::map<std::string,int> node_id_to_node_index;
 		while(std::getline(in_ligand,sline)) {
-			Context_Index line_index = ligand.contexts.size();
-			ligand.contexts.push_back(Context(line_index,sline));
-			// log << sline << std::endl;
-			if(sline=="") continue;
 			PDBQT_PARSE_TYPE ppt = to_pdbqt_parse_type(sline);
+			int line_index = ligand.contexts.size();
+			if(ppt!=PDBQT_BOND) {
+				ligand.contexts.push_back(Context(line_index,sline));
+			}
+			// tee << sline << std::endl;
+			if(sline=="") continue;
 			switch(ppt) {
 				case PDBQT_ATOM:
 				case PDBQT_HETATM: {
 						const Atom a = parse_pdbqt_atom(line_index,sline);
-						Atom_Index a_i = ligand.add_atom(a);
+						int a_i = ligand.add_atom(a);
 						if(a_i==0) {
 							//make sure ligand atom start from 1
 							assert(a.get_serial()==1);
 						}
-						Atom_Index r_a_i = ligand.add_ref_atom(a);
+						int r_a_i = ligand.add_ref_atom(a);
 						assert(a_i == r_a_i);
 						Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
 						atom_tags.push_back(Atom_Tag(a_i,ni));
@@ -197,13 +199,13 @@ namespace tmd {
 					;
 					break;
 				case PDBQT_BOND: {
-						log << "atom size: " << ligand.atoms.size() << " bond: " << sline << std::endl;
+						tee << "atom size: " << ligand.atoms.size() << " bond: " << sline << std::endl;
 						Bond_Info bi = parse_pdbqt_bond_and_add_bond(sline);
 						if(bi.bt != NOT_CONNECTED_BOND && bi.bt != NONE_BOND) {
 							Bond b1(bi.a2,bi.bt);
 							Bond b2(bi.a1,bi.bt);
-							assert(bi.a1 <= ligand.atoms.size());
-							assert(bi.a2 <= ligand.atoms.size());
+							assert(bi.a1 < ligand.atoms.size());
+							assert(bi.a2 < ligand.atoms.size());
 							ligand.atoms[bi.a1].add_bond(b1);
 							ligand.atoms[bi.a2].add_bond(b2);
 							ligand.ref_atoms[bi.a1].add_bond(b1);
@@ -221,13 +223,13 @@ namespace tmd {
 
 		assert(ligand.atom_num()==atom_tags.size());
 
-		log << "Initialize ligand's nodes..." << std::endl;
+		tee << "Initialize ligand's nodes..." << std::endl;
 		//Initialize ligand's tree i.e all nodes, this must be done first since the vector will allocate new memory when push_back new nodes, thus old pointer will fail
-		const Node_Index max_depth = width_in_each_depth.size();
-		log << "total max depth--->" << max_depth << std::endl;
-		for(Node_Index depth_index = 0; depth_index < width_in_each_depth.size(); ++depth_index) {
-			const Node_Index num_of_nodes = width_in_each_depth[depth_index]+1;
-			log << "depth " << depth_index << " has " << num_of_nodes << " nodes" << std::endl;
+		const int max_depth = width_in_each_depth.size();
+		tee << "total max depth--->" << max_depth << std::endl;
+		for(int depth_index = 0; depth_index < width_in_each_depth.size(); ++depth_index) {
+			const int num_of_nodes = width_in_each_depth[depth_index]+1;
+			tee << "depth " << depth_index << " has " << num_of_nodes << " nodes" << std::endl;
 		}
 
 		for(const Node_Info& ni : node_infos) {
@@ -239,22 +241,22 @@ namespace tmd {
 		}
 
 		//assign atom range to each node
-		log << "assign atom range to each node..." << std::endl;
-		for(Atom_Index i = 0; i < atom_tags.size(); ++i) {
-			const Node_Index depth_index = atom_tags.at(i).node_id.depth_index;
-			const Node_Index width_index = atom_tags.at(i).node_id.width_index;
-			Node_Index ni = node_id_to_node_index.at(std::to_string(depth_index)+"-"+std::to_string(width_index));
+		tee << "assign atom range to each node..." << std::endl;
+		for(int i = 0; i < atom_tags.size(); ++i) {
+			const int depth_index = atom_tags.at(i).node_id.depth_index;
+			const int width_index = atom_tags.at(i).node_id.width_index;
+			int ni = node_id_to_node_index.at(std::to_string(depth_index)+"-"+std::to_string(width_index));
 			ligand.nodes[ni].add_atom_index(atom_tags.at(i).atom_index);
 		}
 
-		log << "Establish parent and children's connection..." << std::endl;
+		tee << "Establish parent and children's connection..." << std::endl;
 		//Establish parent and children's connection, and parent bond atom index, self bond atom index
 		//for root
 		ligand.nodes[0].set_parent_pointer(nullptr);
 		//for non root
 		for(auto ni = 1; ni < node_infos.size(); ++ni) {
 			Node_Id parent_node_id = atom_tags.at(node_infos[ni].parent_bond_atom_index).node_id;
-			Node_Index parent_node_index = node_id_to_node_index.at(std::to_string(parent_node_id.depth_index)+"-"+std::to_string(parent_node_id.width_index));
+			int parent_node_index = node_id_to_node_index.at(std::to_string(parent_node_id.depth_index)+"-"+std::to_string(parent_node_id.width_index));
 			ligand.nodes[ni].set_parent_pointer(ligand.nodes[parent_node_index].get_self_pointer());
 			ligand.nodes[parent_node_index].add_child_pointer(ligand.nodes[ni].get_self_pointer());
 		}
@@ -264,10 +266,10 @@ namespace tmd {
 		ligand.nodes[0].set_rot_axis(Vec3d(0,0,1));
 		ligand.nodes[0].set_rot_angle(0.0);
 		// set non root node origin(parent bond atom coord), rot axis(unit vector from parent bond atom to self bond atom) and set all rot angle to 0
-		for(Node_Index ni = 1; ni < ligand.nodes.size(); ++ni) {
+		for(int ni = 1; ni < ligand.nodes.size(); ++ni) {
 			Node& n = ligand.nodes[ni];
-			const Atom_Index parent_bond_atom_index = n.get_parent_bond_atom_index();
-			const Atom_Index self_bond_atom_index = n.get_self_bond_atom_index();
+			const int parent_bond_atom_index = n.get_parent_bond_atom_index();
+			const int self_bond_atom_index = n.get_self_bond_atom_index();
 			const Vec3d origin = ligand.atoms[parent_bond_atom_index].get_coord();
 			Vec3d rot_axis = ligand.atoms[self_bond_atom_index].get_coord() - origin;
 			rot_axis.normalize();

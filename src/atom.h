@@ -11,12 +11,12 @@ namespace tmd {
 class Atom;//forward declaration
 
 // using Ref_Atom = std::reference_wrapper<Atom>;
-using Atom_Index = std::vector<Atom>::size_type;
+// using Atom_Index = std::vector<Atom>::size_type;
 using Atoms = std::vector<Atom>;
 // using Ref_Atoms = std::vector<Atom>;
 // using Input_Atoms std::vector<Atom>;
 struct Context;//forward declaration
-using Context_Index = std::vector<Context>::size_type;
+// using Context_Index = std::vector<Context>::size_type;
 using Contexts = std::vector<Context>;
 
 
@@ -24,12 +24,12 @@ enum ATOM_TYPE {SYBYL,AD4,SYBYL_AD4,AD4_SYBYL};
 
 enum BOND_TYPE {SINGLE_BOND,DOUBLE_BOND,TRIPLE_BOND,AMIDE_BOND,AROMATIC_BOND,DUMMY_BOND,UNKNOWN_BOND,NOT_CONNECTED_BOND,NONE_BOND};
 class Bond {
-    Atom_Index bond_atom_index;
+    int bond_atom_index;
     BOND_TYPE Bond_Type;
 public:
     // Bond() : to_index(-1) {}
-    Bond(const Atom_Index ai, const BOND_TYPE bt) : bond_atom_index(ai), Bond_Type(bt) {}
-    const Atom_Index get_bonded_atom_index() const {
+    Bond(const int ai, const BOND_TYPE bt) : bond_atom_index(ai), Bond_Type(bt) {}
+    const int get_bonded_atom_index() const {
         return this->bond_atom_index;
     }
     const BOND_TYPE get_bond_type() const {
@@ -37,6 +37,7 @@ public:
     }
 };
 using Bonds = std::vector<Bond>;
+// using Bond_Index = Bonds::size_type;
 
 class Atom {
     ELEMENT_TYPE el_type = EL_UNK;
@@ -44,16 +45,16 @@ class Atom {
     SYBYL_TYPE sybyl_type = SYBYL_UNK;
     Vec3d coord;
     Bonds bonds;
-    Atom_Index serial = -1;
+    int serial;
     std::string name = "";
     std::string res_name = "";
     std::string chain_name = "";
-    Atom_Index res_serial = -1;
-    Context_Index context_index;
+    int res_serial;
+    int context_index;
     Float charge = 0.0;
     // Float occupancy = 0.0;
     // Float temp_factor = 0.0;
-    // unsigned int model_serial = 1;
+    // int model_serial = 1;
 public:
     friend void print(const Atom& a, std::ostream& out);
     //constructors
@@ -155,13 +156,13 @@ public:
     void set_chain_name(const std::string& cn) {
         this->chain_name = cn;
     }
-    void set_serial(const Atom_Index& s) {
+    void set_serial(const int& s) {
         this->serial = s;
     }
-    void set_res_serial(const Atom_Index& rs) {
+    void set_res_serial(const int& rs) {
         this->res_serial = rs;
     }
-    void set_context_index(const Context_Index& ci) {
+    void set_context_index(const int& ci) {
         this->context_index = ci;
     }
 
@@ -190,13 +191,13 @@ public:
     const std::string& get_chain_name() const {
         return this->chain_name;
     }
-    const Atom_Index& get_serial() const {
+    const int& get_serial() const {
         return this->serial;
     }
-    const Atom_Index& get_res_serial() const {
+    const int& get_res_serial() const {
         return this->res_serial;
     }
-    const Context_Index& get_context_index() const {
+    const int& get_context_index() const {
         return this->context_index;
     }
     const Vec3d& get_coord() const {

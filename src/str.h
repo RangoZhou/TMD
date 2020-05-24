@@ -43,7 +43,7 @@ inline std::string trim(const std::string &str, const std::string &whitespace = 
 // }
 
 // inline std::string right_trim(const std::string &str, const std::string &whitespace = " \t") {
-// 	std::string::size_type str_begin = 0;
+// 	std::string::int str_begin = 0;
 // 	const auto str_end = str.find_last_not_of(whitespace);
 // 	if (str_end == std::string::npos){
 // 		return ""; // no content
@@ -81,7 +81,7 @@ inline std::string trim(const std::string &str, const std::string &whitespace = 
 // struct bad_conversion {};
 
 // template<typename T>
-// T convert_substring(const std::string& str, Size_Type i, Size_Type j) { // indexes are 1-based, the substring should be non-null
+// T convert_substring(const std::string& str, int i, int j) { // indexes are 1-based, the substring should be non-null
 // 	if(i < 1 || i > j+1 || j > str.size()) throw bad_conversion();
 
 // 	// omit leading whitespace
@@ -98,9 +98,9 @@ inline std::string trim(const std::string &str, const std::string &whitespace = 
 // 	return tmp;
 // }
 
-// inline bool substring_is_blank(const std::string& str, Size_Type i, Size_Type j) { // indexes are 1-based, the substring should be non-null
+// inline bool substring_is_blank(const std::string& str, int i, int j) { // indexes are 1-based, the substring should be non-null
 // 	if(i < 1 || i > j+1 || j > str.size()) throw bad_conversion();
-// 	for(Size_Type k = i-1; k < j; ++k) {
+// 	for(int k = i-1; k < j; ++k) {
 // 		if(!std::isspace(str[k]))
 // 			return false;
 // 	}
@@ -109,7 +109,7 @@ inline std::string trim(const std::string &str, const std::string &whitespace = 
 
 // // when this was written, lexical cast to unsigned didn't work very well with "-123", etc.
 // template<>
-// inline unsigned convert_substring<unsigned>(const std::string& str, Size_Type i, Size_Type j) { // indexes are 1-based, the substring should be non-null
+// inline unsigned convert_substring<unsigned>(const std::string& str, int i, int j) { // indexes are 1-based, the substring should be non-null
 // 	int tmp = convert_substring<int>(str, i, j);
 // 	if(tmp < 0) throw bad_conversion();
 // 	return static_cast<unsigned>(tmp);

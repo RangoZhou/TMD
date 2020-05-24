@@ -28,24 +28,9 @@
 namespace tmd {
 
 struct thread_range {
-    unsigned int begin;
-    unsigned int end;
+    int begin;
+    int end;
 };
-
-class RL_Score {
-    // std::vector<lz::pocket_info> pockets;
-    lz::parameter P;
-    std::ostream& log;
-public:
-    RL_Score(std::ostream& lg) : log(lg) {}
-    const void init(const RNA& rna, const Ligand& lig) {
-        lz::rl_score_init(this->P, rna, lig);
-    }
-    const Float evaluate(const std::vector<thread_range>& tr, const RNA& rna, const Ligand& lig) {
-        return lz::rl_score_evaluate(this->P, rna, lig);
-    }
-};
-
 
 class YW_Score {
 public:
@@ -56,11 +41,13 @@ public:
     // Float gmin = exp(-umax);
     // Float kcal2kbT = 1.68787;
     // store atom i,j 's u index
-    Matrix<Size_Type> u_index_matrix;
+    Matrix<int> u_index_matrix;
     Matrix<Float> u_matrix;
-    std::ostream& log;
+    std::ostream& tee;
 
-    YW_Score(std::ostream& lg) : log(lg) {}
+    YW_Score(std::ostream& lg) : tee(lg) {
+        this->tee << "YW_Score init" << std::endl;
+    }
 
     YW_Score operator=(const YW_Score& rhs) {
         this->rmax = rhs.rmax;
@@ -71,22 +58,22 @@ public:
         return *this;
     }
 
-    YW_Score(const RNA& rna, const Ligand& lig, const Float& radius, const Float& delr, std::ostream& lg) : rmax(radius), dr(delr), u_bin_num(int(radius/delr)), log(lg) {
-        this->log << "rmax: " << this->rmax << " dr: " << this->dr << " u_bin_num: " << this->u_bin_num << std::endl;
+    YW_Score(const RNA& rna, const Ligand& lig, const Float& radius, const Float& delr, std::ostream& lg) : rmax(radius), dr(delr), u_bin_num(static_cast<int>(radius/delr)), tee(lg) {
+        this->tee << "rmax: " << this->rmax << " dr: " << this->dr << " u_bin_num: " << this->u_bin_num << std::endl;
         ////////////////////////////////////////////////////
         ////////read u_now.list ////////////////////////////
         // u_now.list record the statistical potential
         ////////////////////////////////////////////////////
         struct U_Info {
-            Size_Type index;
+            int index;
             Floats values;
-            U_Info(const Size_Type& i, const Floats& v) : index(i), values(v) {}
+            U_Info(const int& i, const Floats& v) : index(i), values(v) {}
         };
         std::map<std::string,U_Info> u_name_index_map;
         std::string sl;
         std::ifstream u_file("/home/yuanzhe/TMD/src/res/u_now.list",std::ios::in);
         assert(u_file);
-        unsigned int u_file_line_count = 0;
+        int u_file_line_count = 0;
         while(getline(u_file,sl)) {
             if(sl[0]=='#') continue;
             std::istringstream ss(sl);
@@ -101,27 +88,27 @@ public:
             u_name_index_map.insert({name,U_Info(u_file_line_count,tmp_values)});
             ++u_file_line_count;
         }
-        const Size_Type num_u_name = u_name_index_map.size();
-        const Size_Type num_dis_bin = u_name_index_map.begin()->second.values.size();
+        const int num_u_name = u_name_index_map.size();
+        const int num_dis_bin = u_name_index_map.begin()->second.values.size();
         for(const auto& uni : u_name_index_map) {
             assert(uni.second.values.size() == num_dis_bin);
         }
         assert(u_file_line_count == num_u_name);
-        this->log << " u size ["<< num_u_name << "," << num_dis_bin << "]" << std::endl;
+        this->tee << " u size ["<< num_u_name << "," << num_dis_bin << "]" << std::endl;
 
         u_matrix.resize(num_dis_bin,num_u_name,0.0);
         for(const auto& uni : u_name_index_map) {
-            for(Size_Type i = 0; i < uni.second.values.size(); ++i) {
+            for(int i = 0; i < uni.second.values.size(); ++i) {
                 u_matrix(i,uni.second.index) = uni.second.values[i];
             }
         }
 
-        Atom_Index rna_atom_num = rna.atom_num();
-        Atom_Index lig_atom_num = lig.atom_num();
+        int rna_atom_num = rna.atom_num();
+        int lig_atom_num = lig.atom_num();
         const Atoms& rna_atoms_ref = rna.get_atoms_reference();
         const Atoms& lig_atoms_ref = lig.get_atoms_reference();
         std::vector<std::string> rna_sybyl_types(rna_atom_num,"");
-        for(Atom_Index i = 0; i < rna_atom_num; ++i) {
+        for(int i = 0; i < rna_atom_num; ++i) {
             const Atom& a = rna_atoms_ref[i];
             // const std::string& elemetn_type = a.get_element_type_name();
             // if(elemetn_type == "H") continue;
@@ -129,7 +116,7 @@ public:
             rna_sybyl_types[i] = (tmp_sybyl_type=="F" || tmp_sybyl_type=="Cl" || tmp_sybyl_type=="Br" || tmp_sybyl_type=="I") ? "Ha" : tmp_sybyl_type;
         }
         std::vector<std::string> lig_sybyl_types(lig_atom_num,"");
-        for(Atom_Index i = 0; i < lig_atom_num; ++i) {
+        for(int i = 0; i < lig_atom_num; ++i) {
             const Atom& a = lig_atoms_ref[i];
             // const std::string& elemetn_type = a.get_element_type_name();
             // if(elemetn_type == "H") continue;
@@ -137,8 +124,8 @@ public:
             lig_sybyl_types[i] = (tmp_sybyl_type=="F" || tmp_sybyl_type=="Cl" || tmp_sybyl_type=="Br" || tmp_sybyl_type=="I") ? "Ha" : tmp_sybyl_type;
         }
         this->u_index_matrix.resize(rna_atom_num,lig_atom_num,-1);
-        for(Atom_Index i = 0; i < rna_atom_num; ++i) {
-            for(Atom_Index j = 0; j < lig_atom_num; ++j) {
+        for(int i = 0; i < rna_atom_num; ++i) {
+            for(int j = 0; j < lig_atom_num; ++j) {
                 const std::string& rna_type = rna_sybyl_types[i];
                 const std::string& lig_type = lig_sybyl_types[j];
                 const std::string& atom_pair_type = (lig_type<rna_type) ? lig_type+"-"+rna_type : rna_type+"-"+lig_type;
@@ -155,8 +142,8 @@ public:
     const Float evaluate(const std::vector<thread_range>& tr, const RNA& rna, const Ligand& lig, const Grids& grids) const {
         // std::cout << " YW thread num: " << tr.size() << " begin: " << tr[0].begin << " end: " << tr[0].end << std::endl;
         Float score = 0.0;
-        const unsigned int begin = tr[0].begin;
-        const unsigned int end = tr[0].end;
+        const int begin = tr[0].begin;
+        const int end = tr[0].end;
 
         // std::mutex thread_lock;
         // thread_lock.lock();
@@ -164,7 +151,7 @@ public:
         // thread_lock.unlock();
         const Atoms& rna_atoms_ref = rna.get_atoms_reference();
         const Atoms& lig_atoms_ref = lig.get_atoms_reference();
-        for(Atom_Index l_i = begin; l_i < end; ++l_i) {
+        for(int l_i = begin; l_i < end; ++l_i) {
             const Atom& lig_atom = lig_atoms_ref[l_i];
             const Vec3d& lig_atom_coord = lig_atom.get_coord();
             const int atom_x_grid = static_cast<int>(lig_atom_coord[0]/grids.width);
@@ -173,13 +160,13 @@ public:
 
             const Grid& grid = grids(atom_x_grid,atom_y_grid,atom_z_grid);
             if(grid.flag) {
-                for(const Atom_Index& r_j : grid.rigid_atoms) {
+                for(const int& r_j : grid.rigid_atoms) {
                     const Atom& rna_atom = rna_atoms_ref[r_j];
-                    const Size_Type u_index = this->u_index_matrix(r_j, l_i);
+                    const int u_index = this->u_index_matrix(r_j, l_i);
                     if(u_index == -1) continue;
                     const Float& dis = (lig_atom.get_coord() - rna_atom.get_coord()).norm();
                     if(dis > this->rmax) continue;
-                    const unsigned int bin_index = int(dis/this->dr);
+                    const int bin_index = static_cast<int>(dis/this->dr);
                     assert(bin_index <= this->u_bin_num);
                     score += this->u_matrix(bin_index,u_index);
                     // std::cout << atom_pair_type << std::endl;
@@ -192,62 +179,87 @@ public:
 };
 
 enum SCORE_MODE {YW_SCORE,RL_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
+
+// class Scoring_Function {
+//     const RNA& rna;
+//     const Ligand& lig;
+//     // SCORE_MODE Score_Mode;
+//     // VDW_Score vdw_score;
+//     YW_Score yw_score;
+//     lz::RL_Score rl_score;
+//     // int num_thread = 0;
+//     // std::vector<thread_range> thread_ranges;
+//     // std::ostream& tee;
+
+//     // Grids grids;//stores the RNA atom mapping with the grids
+// public:
+//     friend YW_Score;
+//     // friend VDW_Score;
+//     //initiate
+//     Scoring_Function(const RNA& r, const Ligand& l) : rna(r), lig(l), rl_score(std::cout), yw_score(std::cout) {}
+//     const double evaluate() {
+//         return 0;
+//     }
+// };
+
+
 class Scoring_Function {
     const RNA& rna;
     const Ligand& lig;
     SCORE_MODE Score_Mode;
     // VDW_Score vdw_score;
     YW_Score yw_score;
-    RL_Score rl_score;
-    unsigned int num_thread = 0;
+    lz::RL_Score rl_score;
+    int num_thread = 0;
     std::vector<thread_range> thread_ranges;
-    std::ostream& log;
+    std::ostream& tee;
 
     Grids grids;//stores the RNA atom mapping with the grids
 public:
     friend YW_Score;
     // friend VDW_Score;
     //initiate
-    Scoring_Function(const RNA& r, const Ligand& l, const SCORE_MODE& sm, std::ostream& lg) : rna(r), lig(l), Score_Mode(sm), log(lg), yw_score(lg), rl_score(lg) {
+    Scoring_Function(const RNA& r, const Ligand& l, const SCORE_MODE& sm, std::ostream& lg) : rna(r), lig(l), Score_Mode(sm), tee(lg), yw_score(lg), rl_score(lg) {
     //thread information
-        this->log << "rna atom num: " << r.atom_num() << " ligand atom num: " << lig.atom_num() << std::endl;
+        this->tee << "rna atom num: " << r.atom_num() << " ligand atom num: " << lig.atom_num() << std::endl;
         this->num_thread = std::thread::hardware_concurrency();
         if(this->num_thread>0) {
-            this->log << "std::thread::hardware_concurrency() return <=0, so using 1 thread!" << std::endl;
+            this->tee << "std::thread::hardware_concurrency() return <=0, so using 1 thread!" << std::endl;
             this->num_thread = 1;
             thread_range tmp_tr;
             tmp_tr.begin = 0;
             tmp_tr.end = lig.atom_num();
             this->thread_ranges.push_back(tmp_tr);
-        } else {
-            assert(false);
-            int num_per_thread = -1;
-            if(this->lig.atom_num()<this->num_thread) {
-                this->log << "this->lig.atom_num() is smaller than num thread, using lig.atom_num() as thread num!" << std::endl;
-                this->num_thread = this->lig.atom_num();
-                num_per_thread = 1;
-                for(auto i = 0; i < this->num_thread; ++i) {
-                    thread_range tmp_tr;
-                    tmp_tr.begin = i;
-                    tmp_tr.end = i+1;
-                    this->thread_ranges.push_back(tmp_tr);
-                }
-            } else {
-                num_per_thread = this->lig.atom_num()/this->num_thread + 1;
-                int total_atom_num_count = 0;
-                while(total_atom_num_count < this->lig.atom_num()) {
-                    thread_range tmp_tr;
-                    tmp_tr.begin = total_atom_num_count;
-                    total_atom_num_count += num_per_thread;
-                    if(total_atom_num_count > this->lig.atom_num()) total_atom_num_count = this->lig.atom_num();
-                    tmp_tr.end = total_atom_num_count;
-                    this->thread_ranges.push_back(tmp_tr);
-                }
-                this->num_thread = this->thread_ranges.size();
-            }
         }
+        // else {
+        //     assert(false);
+        //     int num_per_thread = -1;
+        //     if(this->lig.atom_num()<this->num_thread) {
+        //         this->tee << "this->lig.atom_num() is smaller than num thread, using lig.atom_num() as thread num!" << std::endl;
+        //         this->num_thread = this->lig.atom_num();
+        //         num_per_thread = 1;
+        //         for(auto i = 0; i < this->num_thread; ++i) {
+        //             thread_range tmp_tr;
+        //             tmp_tr.begin = i;
+        //             tmp_tr.end = i+1;
+        //             this->thread_ranges.push_back(tmp_tr);
+        //         }
+        //     } else {
+        //         num_per_thread = this->lig.atom_num()/this->num_thread + 1;
+        //         int total_atom_num_count = 0;
+        //         while(total_atom_num_count < this->lig.atom_num()) {
+        //             thread_range tmp_tr;
+        //             tmp_tr.begin = total_atom_num_count;
+        //             total_atom_num_count += num_per_thread;
+        //             if(total_atom_num_count > this->lig.atom_num()) total_atom_num_count = this->lig.atom_num();
+        //             tmp_tr.end = total_atom_num_count;
+        //             this->thread_ranges.push_back(tmp_tr);
+        //         }
+        //         this->num_thread = this->thread_ranges.size();
+        //     }
+        // }
         assert(this->thread_ranges.size()==this->num_thread);
-        this->log << "thread num: " << this->thread_ranges.size() << " ligand atom num: " << this->lig.atom_num() << std::endl;
+        this->tee << "thread num: " << this->thread_ranges.size() << " ligand atom num: " << this->lig.atom_num() << std::endl;
         /////////////////////////////////////////////////////
         switch(this->Score_Mode) {
             case YW_SCORE:
@@ -273,7 +285,7 @@ public:
     }
 
     void initialize_grids(const RNA& rna, const Float interation_radius, const Float grid_width) {
-        this->log << "start initializing grids..." << std::endl;
+        this->tee << "start initializing grids..." << std::endl;
         struct Grid_Shift {
             const int x;
             const int y;
@@ -299,14 +311,14 @@ public:
                 }
             }
         }
-        this->log << "grid_shifts size -> " << grid_shifts.size() << std::endl;
+        this->tee << "grid_shifts size -> " << grid_shifts.size() << std::endl;
         //initialize grid map
-        this->log << "process rna atom grid_map..." << std::endl;
+        this->tee << "process rna atom grid_map..." << std::endl;
         std::map<std::string,Grid> grid_map;
         std::set<int> grid_x_set;
         std::set<int> grid_y_set;
         std::set<int> grid_z_set;
-        Atom_Index rna_atom_index = 0;
+        int rna_atom_index = 0;
         assert(grid_width>k_epsilon);
         const Atoms& rna_atoms_ref = rna.get_atoms_reference();
         for(const Atom& ra : rna_atoms_ref) {
@@ -343,9 +355,9 @@ public:
         const int max_grid_x = (*grid_x_set.end());
         const int max_grid_y = (*grid_y_set.end());
         const int max_grid_z = (*grid_z_set.end());
-        const unsigned int size_x = max_grid_x - min_grid_x;
-        const unsigned int size_y = max_grid_y - min_grid_y;
-        const unsigned int size_z = max_grid_z - min_grid_z;
+        const int size_x = max_grid_x - min_grid_x;
+        const int size_y = max_grid_y - min_grid_y;
+        const int size_z = max_grid_z - min_grid_z;
         this->grids = Grids(size_x,size_y,size_z,min_grid_x,min_grid_y,min_grid_z,grid_width,Grid());
 
         for(int i = min_grid_x; i <= max_grid_x; ++i) {
@@ -358,7 +370,7 @@ public:
                 }
             }
         }
-        this->log << "finish initializing grids... size: " << this->grids.dim_1() << " " << this->grids.dim_2() << " " << this->grids.dim_3() << std::endl;
+        this->tee << "finish initializing grids... size: " << this->grids.dim_1() << " " << this->grids.dim_2() << " " << this->grids.dim_3() << std::endl;
     }
     // void set_score_type(const SCORE_MODE st ) {
     //     this->Score_Mode = st;
@@ -371,7 +383,7 @@ public:
                 return this->yw_score.evaluate(this->thread_ranges,this->rna,this->lig,this->grids);
                 break;
             case RL_SCORE:
-                return this->rl_score.evaluate(this->thread_ranges,this->rna,this->lig);
+                return this->rl_score.evaluate(this->rna,this->lig);
                 break;
             case VDW_LIGAND:
                 // return this->vdw_score.evaluate(this->thread_ranges,this->lig,this->ligand_pairs);
@@ -395,13 +407,13 @@ public:
                 break;
         }
 
-        // const unsigned int num_thread = tr.size();
+        // const int num_thread = tr.size();
         // std::thread t[num_thread];
         // std::vector<Float> score_thread(num_thread,0);
-        // for(unsigned int i = 0; i != num_thread; ++i) {
+        // for(int i = 0; i != num_thread; ++i) {
         //     t[i] = std::thread(yw_score_calculation, tr[i].begin, tr[i].end, std::ref(rna), std::ref(lig), std::ref(grids), std::ref(*this), std::ref(score_thread[i]));
         // }
-        // for(unsigned int i = 0; i != num_thread; ++i) {
+        // for(int i = 0; i != num_thread; ++i) {
         //     t[i].join();
         // }
         // return std::accumulate(score_thread.begin(), score_thread.end(), 0.0)/static_cast<Float>(lig.heavy_atom_num());

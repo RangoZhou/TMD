@@ -13,11 +13,11 @@ Vec3d::Vec3d(Float x, Float y, Float z) {
 	data[1] = y;
 	data[2] = z;
 }
-const Float& Vec3d::operator[](Size_Type i) const {
+const Float& Vec3d::operator[](int i) const {
 	assert(i < 3);
 	return data[i];
 }
-Float& Vec3d::operator[](Size_Type i) {
+Float& Vec3d::operator[](int i) {
 	assert(i < 3);
 	return data[i];
 }
@@ -97,7 +97,7 @@ void Vec3d::assign(Float s) {
 	data[0] = data[1] = data[2] = s;
 }
 
-Size_Type Vec3d::size() const { return 3; }
+int Vec3d::size() const { return 3; }
 
 //////////////////non-member/////////////////////
 

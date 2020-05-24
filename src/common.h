@@ -8,8 +8,8 @@ namespace tmd {
 
 using Float = double;
 using Floats = std::vector<double>;
-using Size_Type = std::size_t;
-using Size_Types = std::vector<std::size_t>;
+// using Size_Type = std::size_t;
+// using Size_Types = std::vector<std::size_t>;
 // using Float_Pair = std::pair<Float,Float>;
 // using Float_Pairs = std::vector<Float_Pair>;
 // ############constant related############
@@ -20,20 +20,22 @@ using Size_Types = std::vector<std::size_t>;
 // const Float k_pK_to_energy_factor = -8.31 /* RT in J/K/mol */ * 0.001 /* kilo */ * 300 /* K */ / 4.184 /* J/cal */ * std::log(10.0); //  -0.6 kcal/mol * log(10) = -1.38
 const Float k_pi = Float(3.1415926535897931);
 const Float k_max_float = (std::numeric_limits<Float>::max)();
-const Size_Type k_max_size_type = (std::numeric_limits<Size_Type>::max)();
+const Float k_min_float = (std::numeric_limits<Float>::min)();
+// const Size_Type k_max_size_type = (std::numeric_limits<Size_Type>::max)();
 const unsigned k_max_unsigned = (std::numeric_limits<unsigned>::max)();
+const int k_max_int = (std::numeric_limits<int>::max)();
 const Float k_epsilon = std::numeric_limits<Float>::epsilon();
 const Float k_tolerance = Float(0.001);
 const Float k_not_a_num = std::sqrt(Float(-1)); // FIXME? check
 
-template<unsigned n>
-inline Float int_pow(Float x) {
-	return int_pow<n-1>(x)*x; // tests seem to suggest that even for largish n's this optimizes well
-}
-template<>
-inline Float int_pow<0>(Float x) {
-	return 1;
-}
+// template<unsigned n>
+// inline Float int_pow(Float x) {
+// 	return int_pow<n-1>(x)*x; // tests seem to suggest that even for largish n's this optimizes well
+// }
+// template<>
+// inline Float int_pow<0>(Float x) {
+// 	return 1;
+// }
 
 
 // inline const Float pK_to_energy(Float pK) { return k_pK_to_energy_factor * pK; } //return the energy from give pK
@@ -57,17 +59,17 @@ inline const Float square(const Float a) {
 
 
 //define macros
-#define TMD_FOR_IN(i, v) for(Size_Type VINA_MACROS_TMP = (v).size(), (i) = 0; (i) < VINA_MACROS_TMP; ++(i))
-#define TMD_FOR(i, n)    for(Size_Type VINA_MACROS_TMP = (n),        (i) = 0; (i) < VINA_MACROS_TMP; ++(i))
+// #define TMD_FOR_IN(i, v) for(Size_Type VINA_MACROS_TMP = (v).size(), (i) = 0; (i) < VINA_MACROS_TMP; ++(i))
+// #define TMD_FOR(i, n)    for(Size_Type VINA_MACROS_TMP = (n),        (i) = 0; (i) < VINA_MACROS_TMP; ++(i))
 // #define TMD_U_FOR(i, n)  for(unsigned    VINA_MACROS_TMP = (n),        (i) = 0; (i) < VINA_MACROS_TMP; ++(i))
 
-#define TMD_RANGE(i, a, b)   for(Size_Type VINA_MACROS_TMP = (b), (i) = (a); (i) < VINA_MACROS_TMP; ++(i))
+// #define TMD_RANGE(i, a, b)   for(Size_Type VINA_MACROS_TMP = (b), (i) = (a); (i) < VINA_MACROS_TMP; ++(i))
 // #define TMD_U_RANGE(i, a, b) for(unsigned    VINA_MACROS_TMP = (b), (i) = (a); (i) < VINA_MACROS_TMP; ++(i))
 // #define TMD_I_RANGE(i, a, b) for(int         VINA_MACROS_TMP = (b), (i) = (a); (i) < VINA_MACROS_TMP; ++(i))
 
 // #define TMD_LOOP_CONST(t, i, v) for(t::const_iterator (i) = (v).begin(); (i) != (v).end(); ++(i))
 // #define TMD_LOOP(t, i, v) for(t::iterator       (i) = (v).begin(); (i) != (v).end(); ++(i))
 
-#define TMD_SHOW(x)       do { std::cout << #x << " = " << (x) << std::endl; } while(false)
+// #define TMD_SHOW(x)       do { std::cout << #x << " = " << (x) << std::endl; } while(false)
 // #define TMD_SHOW_FAST(x)  do { std::cout << #x << " = " << (x) <<      '\n'; } while(false)
 // #define TMD_ESHOW(x)      do { std::cerr << #x << " = " << (x) <<      '\n'; } while(false)

@@ -24,11 +24,11 @@ namespace tmd {
 
     struct Element_Info {
         const std::string name;
-        const Size_Type atomic_number;
+        const int atomic_number;
         const Float covalent_radius;
         const Float atomic_radius;
         const Float vdw_radius;
-        Element_Info(const std::string n, const Size_Type an, const Float cr, const Float ar, const Float vr) : name(n), atomic_number(an), covalent_radius(cr), atomic_radius(ar), vdw_radius(vr) {}
+        Element_Info(const std::string n, const int an, const Float cr, const Float ar, const Float vr) : name(n), atomic_number(an), covalent_radius(cr), atomic_radius(ar), vdw_radius(vr) {}
     };
     //All Info comes from this webpage --->  http://periodictable.com/index.html
     //information below is for vdw radius
@@ -270,7 +270,7 @@ namespace tmd {
         {"UNK"  ,   EL_UNK, sybyl_iwd, sybyl_ivr, sybyl_isp, sybyl_ivv, sybyl_icr}
     }};
 
-    const Size_Type sybyl_infos_size =  sybyl_infos.size();
+    const int sybyl_infos_size =  sybyl_infos.size();
 
     const std::map<std::string,SYBYL_TYPE> sybyl_type_lookup = {
         // name, SYBYL_TYPE
@@ -401,7 +401,7 @@ const std::array<AD4_Info,AD4_SIZE> ad4_infos = {{
 const Float ad4_msp = -0.00110;//metal_solvation_parameter
 const Float ad4_mcr = 1.75; //metal_covalent_radius for metals not on the list // FIXME this info should be moved to non_ad_metals
 
-const Size_Type ad4_infos_size =  ad4_infos.size();
+const int ad4_infos_size =  ad4_infos.size();
 
 const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 { "C" , AD4_C  },
@@ -442,17 +442,17 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 // };
 
 
-// inline bool ad_is_hydrogen(Size_Type ad) {
+// inline bool ad_is_hydrogen(int ad) {
 // 	return ad == AD_TYPE_H || ad == AD_TYPE_HD;
 // }
 
-// inline bool ad_is_heteroatom(Size_Type ad) { // returns false for ad >= AD_TYPE_SIZE
+// inline bool ad_is_heteroatom(int ad) { // returns false for ad >= AD_TYPE_SIZE
 // 	return ad != AD_TYPE_A && ad != AD_TYPE_C  &&
 // 		   ad != AD_TYPE_H && ad != AD_TYPE_HD &&
 // 		   ad < AD_TYPE_SIZE;
 // }
 
-// inline Size_Type ad_type_to_el_type(Size_Type t) {
+// inline int ad_type_to_el_type(int t) {
 // 	switch(t) {
 // 		case AD_TYPE_C    : return EL_TYPE_C;
 // 		case AD_TYPE_A    : return EL_TYPE_C;
@@ -486,8 +486,8 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 // };
 
 // inline bool is_non_ad_metal_name(const std::string& name) {
-// 	const Size_Type s = sizeof(non_ad_metal_names) / sizeof(const std::string);
-// 	for(Size_Type i = 0; i < s; ++i){
+// 	const int s = sizeof(non_ad_metal_names) / sizeof(const std::string);
+// 	for(int i = 0; i < s; ++i){
 // 		if(non_ad_metal_names[i] == name){
 // 			return true;
 // 		}
@@ -495,7 +495,7 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 // 	return false;
 // }
 
-// inline bool xs_is_hydrophobic(Size_Type xs) {
+// inline bool xs_is_hydrophobic(int xs) {
 // 	return xs == XS_TYPE_C_H ||
 // 		   xs == XS_TYPE_F_H ||
 // 		   xs == XS_TYPE_Cl_H ||
@@ -503,14 +503,14 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 // 		   xs == XS_TYPE_I_H;
 // }
 
-// inline bool xs_is_acceptor(Size_Type xs) {
+// inline bool xs_is_acceptor(int xs) {
 // 	return xs == XS_TYPE_N_A ||
 // 		   xs == XS_TYPE_N_DA ||
 // 		   xs == XS_TYPE_O_A ||
 // 		   xs == XS_TYPE_O_DA;
 // }
 
-// inline bool xs_is_donor(Size_Type xs) {
+// inline bool xs_is_donor(int xs) {
 // 	return xs == XS_TYPE_N_D ||
 // 		   xs == XS_TYPE_N_DA ||
 // 		   xs == XS_TYPE_O_D ||
@@ -518,27 +518,27 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 // 		   xs == XS_TYPE_Met_D;
 // }
 
-// inline bool xs_donor_acceptor(Size_Type t1, Size_Type t2) {
+// inline bool xs_donor_acceptor(int t1, int t2) {
 // 	return xs_is_donor(t1) && xs_is_acceptor(t2);
 // }
 
-// inline bool xs_h_bond_possible(Size_Type t1, Size_Type t2) {
+// inline bool xs_h_bond_possible(int t1, int t2) {
 // 	return xs_donor_acceptor(t1, t2) || xs_donor_acceptor(t2, t1);
 // }
 
-// inline const atom_kind& ad_type_property(Size_Type i) {
+// inline const atom_kind& ad_type_property(int i) {
 // 	assert(AD_TYPE_SIZE == atom_kinds_size);
 //     assert(i < atom_kinds_size);
 //     return atom_kind_data[i];
 // }
 
-// inline Size_Type string_to_ad_type(const std::string& name) { // returns AD_TYPE_SIZE if not found (no exceptions thrown, because metals unknown to AD4 are not exceptional)
-//     for(Size_Type i = 0; i < atom_kinds_size; ++i){
+// inline int string_to_ad_type(const std::string& name) { // returns AD_TYPE_SIZE if not found (no exceptions thrown, because metals unknown to AD4 are not exceptional)
+//     for(int i = 0; i < atom_kinds_size; ++i){
 // 		if(atom_kind_data[i].name == name){
 // 			return i;
 // 		}
 // 	}
-// 	for(Size_Type i = 0; i < atom_equivalences_size; ++i){
+// 	for(int i = 0; i < atom_equivalences_size; ++i){
 // 		if(atom_equivalence_data[i].name == name){
 // 			return string_to_ad_type(atom_equivalence_data[i].to);
 // 		}
@@ -548,7 +548,7 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 
 // inline Float max_covalent_radius() {
 // 	Float tmp = 0;
-// 	for(Size_Type i = 0; i < atom_kinds_size; ++i){
+// 	for(int i = 0; i < atom_kinds_size; ++i){
 // 		if(atom_kind_data[i].covalent_radius > tmp){
 // 			tmp = atom_kind_data[i].covalent_radius;
 // 		}
@@ -579,7 +579,7 @@ const std::map<std::string,AD4_TYPE> ad4_type_lookup = {
 
 
 
-    // const Size_Type acceptor_infos_size =  acceptor_infos.size();
+    // const int acceptor_infos_size =  acceptor_infos.size();
 
     // inline const ELEMENT_TYPE sybyl_type_to_element_type(const SYBYL_TYPE at) {
     //     return sybyl_infos.at(at).EL_TYPE;

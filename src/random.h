@@ -38,16 +38,16 @@ inline const int random_int(int a, int b, RNGType& generator) { // expects a <= 
 	return tmp;
 }
 
-inline const Size_Type random_size_t(Size_Type a, Size_Type b, RNGType& generator) { // expects a <= b, returns rand in [a, b]
-	assert(a <= b);
-	assert(int(a) >= 0);
-	assert(int(b) >= 0);
-	int i = random_int(int(a), int(b), generator);
-	assert(i >= 0);
-	assert(i >= int(a));
-	assert(i <= int(b));
-	return static_cast<Size_Type>(i);
-}
+// inline const Size_Type random_size_t(Size_Type a, Size_Type b, RNGType& generator) { // expects a <= b, returns rand in [a, b]
+// 	assert(a <= b);
+// 	assert(int(a) >= 0);
+// 	assert(int(b) >= 0);
+// 	int i = random_int(int(a), int(b), generator);
+// 	assert(i >= 0);
+// 	assert(i >= int(a));
+// 	assert(i <= int(b));
+// 	return static_cast<Size_Type>(i);
+// }
 
 inline const Vec3d random_inside_sphere(RNGType& generator) {
 	while(true) { // on average, this will have to be run about twice
@@ -76,7 +76,7 @@ inline const Vec3d random_unit_vec3d(RNGType& generator) {
 
 inline const Vec3d random_in_box(const Vec3d& corner1, const Vec3d& corner2, RNGType& generator) { // expects corner1[i] < corner2[i]
 	Vec3d tmp;
-	for(Size_Type i = 0; i < tmp.size(); ++i){
+	for(int i = 0; i < tmp.size(); ++i){
 		tmp[i] = random_double(corner1[i], corner2[i], generator);
 	}
 	return tmp;

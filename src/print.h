@@ -14,13 +14,13 @@ namespace tmd {
 inline void print(Float x, std::ostream& out = std::cout) {
 	out << x;
 }
-inline void print(Size_Type x, std::ostream& out = std::cout) {
+inline void print(int x, std::ostream& out = std::cout) {
 	out << x;
 }
 template<typename T>
 void print(const std::vector<T>& v, std::ostream& out = std::cout) {
 	out << "[";
-	for(Size_Type i = 0; i< v.size(); ++i) {
+	for(int i = 0; i< v.size(); ++i) {
 		if(i != 0)
 			out << " ";
 		out << v[i];
@@ -30,7 +30,7 @@ void print(const std::vector<T>& v, std::ostream& out = std::cout) {
 
 inline void print(const Vec3d& v, std::ostream& out = std::cout) {
 	out << "(";
-	for(Size_Type i = 0; i< v.size(); ++i) {
+	for(int i = 0; i< v.size(); ++i) {
 		if(i != 0)
 			out << ", ";
 		out << v[i];

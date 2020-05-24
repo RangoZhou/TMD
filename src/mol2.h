@@ -23,7 +23,7 @@ namespace tmd {
         else return MOL2_NONE;
 	}
 
-	inline const Atom parse_mol2_atom(const Context_Index& ci, const std::string &sline) {
+	inline const Atom parse_mol2_atom(const int& ci, const std::string &sline) {
 		std::vector<std::string> atom_items = string2vector(sline);
 		const std::string sybyl_atom_type = trim(atom_items[5]);
 		Atom atom(sybyl_atom_type,SYBYL);
@@ -46,18 +46,18 @@ namespace tmd {
 
 
 
-	inline void read_rna_mol2(const std::string rna_path, RNA& r, std::ostream& log) {
+	inline void read_rna_mol2(const std::string rna_path, RNA& r, std::ostream& tee) {
 		std::ifstream in_rna(rna_path);
 		assert(in_rna);
 		std::string sline;
 
-		unsigned int model_num = 0;
+		int model_num = 0;
 		MOL2_BLOCK_TYPE Mol2_Block_Type_Flag = MOL2_NONE;
 
 		while(std::getline(in_rna,sline)) {
-			Context_Index context_index = r.contexts.size();
+			int context_index = r.contexts.size();
 			r.contexts.push_back(Context(context_index,sline));
-			// log << sline << std::endl;
+			// tee << sline << std::endl;
 			if(sline=="") continue;
 
 			MOL2_BLOCK_TYPE Temp_Mol2_Block_Flag = to_mol2_block_type(sline);
@@ -68,8 +68,8 @@ namespace tmd {
 			switch(Mol2_Block_Type_Flag) {
 				case MOL2_ATOM: {
 					const Atom a = parse_mol2_atom(context_index,sline);
-					Atom_Index a_i = r.add_atom(a);
-					Atom_Index r_a_i = r.add_ref_atom(a);
+					int a_i = r.add_atom(a);
+					int r_a_i = r.add_ref_atom(a);
 					assert(a_i == r_a_i);
 					break;
 				}

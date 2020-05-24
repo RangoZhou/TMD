@@ -29,7 +29,8 @@ def generate_pdbqt(path, save_path, molecule_type, check_hydrogen, reserve_charg
     if molecule_type == 'rna':
         cmd = '~/.local/mgltools_x86_64Linux2_1.5.6/bin/pythonsh ~/.local/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ' + path + ' -o ' + save_path + ' -U nphs_lps'
     if molecule_type == 'ligand':
-        cmd = '~/.local/mgltools_x86_64Linux2_1.5.6/bin/pythonsh ~/.local/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ' + path + ' -o ' + save_path
+        cmd = '~/.local/mgltools_x86_64Linux2_1.5.6/bin/pythonsh ~/.local/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ' + path + ' -o ' + save_path + " -U lps "
+            # "-p H -p HD -p HS -p C -p A -p N -p NA -p NS -p OA -p OS -p F -p Mg -p MG -p P -p SA -p S -p Cl -p CL -p Ca -p CA -p Mn -p MN -p Fe -p FE -p Zn -p ZN -p Br -p BR -p I"
         # + " -U ''" does not work with reserve charge, if use this charge will be re calculated
     if check_hydrogen == True:
         cmd += ' -A checkhydrogens'
@@ -140,7 +141,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 4:
         print('arguments num not correct!')
         exit()
-    mol2_output = input_file + '.tmp.mol2'
+    mol2_output = input_file + '.tmp1.mol2'
     with open('/tmp/prepare_tmd.tmp', 'w') as f:
         if add_charge == "True":
             f.write('{} {} True\n'.format(os.getcwd()+'/'+input_file,os.getcwd()+'/'+mol2_output))
@@ -152,14 +153,26 @@ if __name__ == '__main__':
     os.system('chimera --nogui ~/TMD/script/prepare_mol2.py')
 
     pdbqt_input = mol2_output
-    pdbqt_output = pdbqt_input + '.tmp.pdbqt'
+    pdbqt_output = pdbqt_input + '.tmp2.pdbqt'
     # remove_substructure_from_mol2(path=mol2_file, save_path=mol2_file)
     generate_pdbqt(path=pdbqt_input, save_path=pdbqt_output, molecule_type='ligand', check_hydrogen=False, reserve_charge=True)
 
     babel_input = pdbqt_output
-    babel_output = babel_input + '.tmp.mol2'
+    babel_output = babel_input + '.tmp3.mol2'
     babel_command="obabel -ipdbqt {} -omol2 -O {}".format(babel_input,babel_output)
     os.system(babel_command)
+
+    # final_mol2_input = babel_output
+    # final_mol2_output = final_mol2_input + '.tmp4.mol2'
+    # with open('/tmp/prepare_tmd.tmp', 'w') as f:
+    #     if add_charge == "True":
+    #         f.write('{} {} True\n'.format(os.getcwd()+'/'+final_mol2_input,os.getcwd()+'/'+final_mol2_output))
+    #     elif add_charge == "False":
+    #         f.write('{} {} False\n'.format(os.getcwd()+'/'+final_mol2_input,os.getcwd()+'/'+final_mol2_output))
+    #     else:
+    #         print('charge argument not correct!')
+    #         exit()
+    # os.system('chimera --nogui ~/TMD/script/prepare_mol2.py')
 
     generate_tmd(pdbqt_path=pdbqt_output, mol2_path=babel_output, save_path=output_file)
 

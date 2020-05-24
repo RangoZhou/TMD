@@ -29,14 +29,18 @@ public:
 		   data[1] = yx; data[4] = yy; data[7] = yz;
 		   data[2] = zx; data[5] = zy; data[8] = zz;
 	}
-	const Float& operator()(Size_Type i, Size_Type j) const {
-		assert(i < 3);
-		assert(j < 3);
+	const Float& operator()(int i, int j) const {
+		#ifdef DEBUG
+		assert(i < 3 && i >= 0);
+		assert(j < 3 && j >= 0);
+		#endif
 		return data[i + 3*j];
 	}
-	Float& operator()(Size_Type i, Size_Type j) {
-		assert(i < 3);
-		assert(j < 3);
+	Float& operator()(int i, int j) {
+		#ifdef DEBUG
+		assert(i < 3 && i >= 0);
+		assert(j < 3 && j >= 0);
+		#endif
 		return data[i + 3*j];
 	}
 	Vec3d operator*(const Vec3d& v) const {
@@ -45,7 +49,7 @@ public:
 					data[2]*v[0] + data[5]*v[1] + data[8]*v[2]);
 	}
 	const Mat3x3& operator*=(Float s) {
-		for(Size_Type i = 0; i < 9; ++i) {
+		for(int i = 0; i < 9; ++i) {
 			data[i] *= s;
 		}
 		return *this;

@@ -10,10 +10,10 @@ namespace tmd {
 template<typename T1, typename T2>
 void progress_bar(const T1 &counted, const T2 &total) {
     Float progress = Float(counted)/Float(total);
-    int barWidth = 50;
+    unsigned barWidth = 50;
     std::cout << "[";
-    int pos = barWidth * progress;
-    for(int i = 0; i < barWidth; ++i) {
+    unsigned pos = barWidth * progress;
+    for(unsigned i = 0; i < barWidth; ++i) {
         if (i < pos) std::cout << "=";
         else if (i == pos) std::cout << ">";
         else std::cout << " ";

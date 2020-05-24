@@ -36,7 +36,7 @@ struct Options_Occurrence {
 
 Options_Occurrence get_occurrence(po::variables_map& vm,po::options_description& d) {
 	Options_Occurrence tmp;
-	for(tmd::Size_Type i = 0; i < d.options().size(); ++i) {
+	for(int i = 0; i < d.options().size(); ++i) {
 		if(vm.count((*d.options()[i]).long_name()))
 			tmp.some = true;
 		else
@@ -46,7 +46,7 @@ Options_Occurrence get_occurrence(po::variables_map& vm,po::options_description&
 }
 
 void check_occurrence(po::variables_map& vm, po::options_description& d) {
-	for(tmd::Size_Type i = 0; i < d.options().size(); ++i) {
+	for(int i = 0; i < d.options().size(); ++i) {
 		const std::string& str = (*d.options()[i]).long_name();
 		if(!vm.count(str))
 			std::cerr << "Required parameter --" << str << " is missing!\n";
@@ -73,7 +73,8 @@ int main(int argc, char* argv[]) {
 ProfilerStart("/tmp/profile.out");
 #endif
 try {
-    int seed, cpu;
+    int seed;
+    int cpu;
     std::string rigid_path, ligand_path, flex_path, config_path, out_path, log_path;
     bool score_only = false, local_only = false, randomize_only = false;
     tmd::Float box_center_x, box_center_y, box_center_z, box_size_x, box_size_y, box_size_z;
@@ -89,7 +90,7 @@ try {
         ("ligand", po::value<std::string>(&ligand_path), "ligand (TMD)")
         ("sample_type", po::value<std::string>(&sample_type), "sampling_mode: flexible or rigid")
         ("score_type", po::value<std::string>(&score_type), "scoring_function: yw_score, vdw_score")
-        ("optimizer_type", po::value<std::string>(&optimizer_type), "optimizer: stimulated_anealing")
+        ("optimizer_type", po::value<std::string>(&optimizer_type), "optimizer: stimulated_annealing")
     ;
     //options_description search_area("Search area (required, except with --score_only)");
     po::options_description search_area("Search space (required)");
@@ -227,7 +228,7 @@ try {
     // if(vm.count("flex") && !vm.count("receptor"))
     //     throw usage_error("Flexible side chains are not allowed without the rest of the receptor"); // that's the only way parsing works, actually
 
-    std::ofstream log = (vm.count("log") > 0) ? std::ofstream(log_path) : std::ofstream(default_log(ligand_path));
+    std::ofstream tee = (vm.count("log") > 0) ? std::ofstream(log_path) : std::ofstream(default_log(ligand_path));
 
     if(search_box_needed) {
         Options_Occurrence oo = get_occurrence(vm, search_area);
@@ -240,26 +241,26 @@ try {
             throw Usage_Error("Search space dimensions should be positive");
     }
 
-    log << "cite_message" << std::endl;
+    tee << "cite_message" << std::endl;
 
     if(search_box_needed && box_size_x * box_size_y * box_size_z > 27e3) {
-        log << "WARNING: The search space volume > 27000 Angstrom^3 (See FAQ)\n";
+        tee << "WARNING: The search space volume > 27000 Angstrom^3 (See FAQ)\n";
     }
 
     if(output_produced) {
         //if out exist won't excute
         if(!vm.count("out")) {
             out_path = default_output(ligand_path);
-            log << "Output will be " << out_path << std::endl;
+            tee << "Output will be " << out_path << std::endl;
         }
     }
 
     if(vm.count("cpu") == 0) {
-        unsigned num_cpus = boost::thread::hardware_concurrency();
+        int num_cpus = boost::thread::hardware_concurrency();
         if(num_cpus > 0)
-            log << "Detected " << num_cpus << " CPU" << ((num_cpus > 1) ? "s" : "") << std::endl;
+            tee << "Detected " << num_cpus << " CPU" << ((num_cpus > 1) ? "s" : "") << std::endl;
         else
-            log << "Could not detect the number of CPUs, using 1\n";
+            tee << "Could not detect the number of CPUs, using 1\n";
         if(num_cpus > 0)
             cpu = num_cpus;
         else
@@ -268,35 +269,35 @@ try {
     if(cpu < 1)
         cpu = 1;
     // if(verbosity > 1 && exhaustiveness < cpu)
-    //     log << "WARNING: at low exhaustiveness, it may be impossible to utilize all CPUs\n";
+    //     tee << "WARNING: at low exhaustiveness, it may be impossible to utilize all CPUs\n";
 
     // int seed = tmd::auto_seed();
-    log << "Using seed: " << seed << std::endl;
+    tee << "Using seed: " << seed << std::endl;
     tmd::RNGType generator(static_cast<tmd::RNGType::result_type>(seed));
-    log << "hello" << std::endl;
+    tee << "hello" << std::endl;
     // std::string rna_path = argv[1];
     // std::string ligand_path = argv[2];
-    log << "decalare rna..." << std::endl;
+    tee << "decalare rna..." << std::endl;
     tmd::RNA rna;
-    log << "start read rna information..." << std::endl;
-    tmd::read_rna_mol2(rigid_path,rna,log);
-    log << "finish reading rna!" << std::endl;
+    tee << "start read rna information..." << std::endl;
+    tmd::read_rna_mol2(rigid_path,rna,tee);
+    tee << "finish reading rna!" << std::endl;
     // if(rna.atom_num()>=2000) {
-    //     log << "RNA contain more than " << 2000 << " atoms, skip for now!" << std::endl;
+    //     tee << "RNA contain more than " << 2000 << " atoms, skip for now!" << std::endl;
     //     return 0;
     // }
 
-    log << "decalare ligand..." << std::endl;
+    tee << "decalare ligand..." << std::endl;
     tmd::Ligand ligand;
-    log << "start read ligand information..." << std::endl;
-    tmd::read_ligand_pdbqt(ligand_path,ligand,log);
-    log << "finish reading ligand!" << std::endl;
-    tmd::print(ligand, log);
+    tee << "start read ligand information..." << std::endl;
+    tmd::read_ligand_pdbqt(ligand_path,ligand,tee);
+    tee << "finish reading ligand!" << std::endl;
+    tmd::print(ligand, tee);
 
-    tmd::Floats::size_type num_of_dof = ligand.dof_num();
-    log << "ligand has " << num_of_dof << " dofs" << std::endl;
-    // log << "print initial ligand:" << std::endl;
-    // ligand.write(log);
+    int num_of_dof = ligand.dof_num();
+    tee << "ligand has " << num_of_dof << " dofs" << std::endl;
+    // tee << "print initial ligand:" << std::endl;
+    // ligand.write(tee);
 
     //
     tmd::SCORE_MODE Score_Type;
@@ -313,7 +314,7 @@ try {
     } else {
         assert(false);
     }
-    log << "using " << score_type << " scoring function" << std::endl;
+    tee << "using " << score_type << " scoring function" << std::endl;
     tmd::SAMPLE_MODE Sample_Type;
     if(sample_type=="rigid") {
         Sample_Type = tmd::SAMPLE_RIGID;
@@ -322,19 +323,17 @@ try {
     } else {
         assert(false);
     }
-    log << "using " << sample_type << " sampling mode" << std::endl;
+    tee << "using " << sample_type << " sampling mode" << std::endl;
     tmd::OPTIMIZATION_MODE Optimizer_Type;
-    if(optimizer_type=="stimulated_anealing") {
-        Optimizer_Type = tmd::SIMULATED_ANEALING;
+    if(optimizer_type=="stimulated_annealing") {
+        Optimizer_Type = tmd::SIMULATED_ANNEALING;
     } else {
         assert(false);
     }
-    log << "using " << optimizer_type << " optimizer" << std::endl;
+    tee << "using " << optimizer_type << " optimizer" << std::endl;
 
-    log << "scoring function init..." << std::endl;
-    tmd::Scoring_Function scoring_function(rna,ligand,Score_Type,log);
-    //SCORE_TYPE is enum and it has {YW_SCORE,VDW_LIGAND,VDW_RNA_LIGAND,ALL};
-    // scoring_function.set_score_type(Score_Type);
+    tee << "scoring function init..." << std::endl;
+    tmd::Scoring_Function scoring_function(rna,ligand,Score_Type,tee);
 
     tmd::Vec3d center;
     tmd::Vec3d corner1;
@@ -343,15 +342,15 @@ try {
         center = tmd::Vec3d(box_center_x, box_center_y, box_center_z);
         corner1 = tmd::Vec3d(-box_size_x/2.0, -box_size_y/2.0, -box_size_z/2.0) + center;
         corner2 = tmd::Vec3d(box_size_x/2.0, box_size_y/2.0, box_size_z/2.0) + center;
-        log << "box center: ";
-        tmd::print(center, log);
-        log << std::endl;
-        log << "box size: " << box_size_x << " " << box_size_y << " " << box_size_z << std::endl;
-        log << "box corner1 and corner2: ";
-        tmd::print(corner1, log);
-        log << " ";
-        tmd::print(corner2, log);
-        log << std::endl;
+        tee << "box center: ";
+        tmd::print(center, tee);
+        tee << std::endl;
+        tee << "box size: " << box_size_x << " " << box_size_y << " " << box_size_z << std::endl;
+        tee << "box corner1 and corner2: ";
+        tmd::print(corner1, tee);
+        tee << " ";
+        tmd::print(corner2, tee);
+        tee << std::endl;
     }
 
     // corner1 = tmd::Vec3d(-8/2.0, -8/2.0, -8/2.0) + center;
@@ -366,36 +365,70 @@ try {
     // outligand.close();
     // exit(2);
 
-    tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),Sample_Type,Optimizer_Type,generator,log);
+    //get pocket
+    tmd::Pocket pocket(tee);
+    // pocket.find_pocket(rna);
+    // tee << "find " << pocket.sites.size() << " pocket sites" << std::endl;
+
+    // std::ofstream pocket_file("./pocket.mol2");
+    // //out pocket to file in pdb format
+    // // tmd::Atom pocket_atom("Mg", tmd::SYBYL_AD4);
+    // // pocket_atom.set_name("Mg");
+    // // pocket_atom.set_element_type(tmd::EL_MG);
+    // // pocket_atom.set_res_name("Mg");
+    // // pocket_atom.set_chain_name("A");
+    // pocket_file << "@<TRIPOS>MOLECULE" << std::endl;
+    // pocket_file << "pocket_sites" << std::endl;
+    // pocket_file << pocket.sites.size() << " 26 1 0 0" << std::endl;
+    // pocket_file << "PROTEIN" << std::endl;
+    // pocket_file << "AMBER ff14SB" << std::endl;
+    // pocket_file << "@<TRIPOS>ATOM" << std::endl;
+    // int pocket_site_count = 0;
+    // for(const auto& ps : pocket.sites) {
+    //     pocket_site_count++;
+    //     // pocket_atom.set_coord(tmd::Vec3d(ps.x,ps.y,ps.z));
+    //     // tmd::print(pocket_atom,pocket_file);
+    //     // pocket_atom.set_res_serial(pocket_site_count);
+    //     // pocket_atom.set_serial(pocket_site_count);
+
+    //     pocket_file << "  " << pocket_site_count << " " << "Mg" << " " << std::fixed << std::setprecision(4) << ps.x << " " << ps.y << " " << ps.z << " " << "Mg" << " " << pocket_site_count << " " << "Mg" << " " << 2.00 << std::endl;
+	// 	pocket_file << std::defaultfloat << std::setprecision(6);
+    // }
+    // pocket_file.close();
+
+
+    tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),pocket,Sample_Type,Optimizer_Type,generator,tee);
 
     if(randomize_only) {
-        log << "finish randomize only!" << std::endl;
+        tee << "finish randomize only!" << std::endl;
         return 0;
     }
 
     if(score_only) {
-        log << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
-        log << "finish score only!" << std::endl;
+        tee << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
+        tee << "finish score only!" << std::endl;
         return 0;
     }
 
     sampling.docking();
-    log << "output ligand: " << out_path << std::endl;
+    tee << "output ligand: " << out_path << std::endl;
     // const tmd::Sampled_Ligands& clustered_ligands = sampling.cluster();
+    tee << "has " << sampling.num_conformer() << " conformers stored" << std::endl;
     std::ofstream outligand_final(out_path);
     assert(outligand_final);
-    unsigned int model_index = 0;
-    unsigned int conformer_num_step = sampling.num_conformer() < 500 ? 1 : sampling.num_conformer()/500.0;
-    for(int ci = sampling.num_conformer()-1; ci >= 0;) {
-        // std::cout << ci << " " << model_index << std::endl;
+    int model_index = 0;
+    int conformer_num_step = sampling.num_conformer() < 500 ? 1 : sampling.num_conformer()/500.0;
+    for(int ci = sampling.num_conformer()-1; ci >= 0; ci -= conformer_num_step) {
+        tee << "conformer index: " << ci << " model index: " << model_index << " rmsd: " << sampling.get_conformers()[ci].rmsd << " score: " << sampling.get_conformers()[ci].score << std::endl;
+        assert(ci < sampling.num_conformer());
         sampling.output_conformer(ci,++model_index,outligand_final);
         if(model_index>=500) {
             break;
         }
-        ci -= conformer_num_step;
+        if(ci < conformer_num_step) break;
     }
     outligand_final.close();
-    log << std::endl;
+    tee << std::endl;
 
     return 0;
 }

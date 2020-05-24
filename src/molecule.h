@@ -20,8 +20,8 @@ struct Node_Id;//forward declaration
 class Ligand;//forward declaration
 using Node_Ids = std::vector<Node_Id>;
 using Nodes = std::vector<Node>;
-using Node_Index = std::vector<Node>::size_type;
-using Atom_Ranges = std::vector<Atom_Index>;
+// using Node_Index = std::vector<Node>::size_type;
+using Atom_Ranges = std::vector<int>;
 
 enum LIGAND_SAMPLE_MODE {LIGAND_SAMPLE_RIGID,LIGAND_SAMPLE_FLEXIBLE};
 // using DOF = Float;
@@ -38,10 +38,14 @@ struct Conf {
 
 //Each node's Node_Id tells us its position in the ligand torsional tree
 struct Node_Id {
-    Node_Index depth_index = -1;
-    Node_Index width_index = -1;
+    int depth_index = -1;
+    int width_index = -1;
     // Node_Id() {}
-    Node_Id(const Node_Index di, const Node_Index wi) : depth_index(di), width_index(wi) {}
+    Node_Id(const int di, const int wi) : depth_index(di), width_index(wi) {
+        #ifdef DEBUG
+        assert(depth_index >= 0 && width_index >= 0);
+        #endif
+    }
 };
 
 //each Node is linked to its parent and children through pointers and the transformation operations performed on one Node will be transmitted to all its children and children's children util reach the end
@@ -52,8 +56,8 @@ private:
 
     Node_Id node_id;
 
-    Atom_Index parent_bond_atom_index = -1;//store parent bond atom, if parent does not exist store the root atom
-    Atom_Index self_bond_atom_index = -1;
+    int parent_bond_atom_index = -1;//store parent bond atom, if parent does not exist store the root atom
+    int self_bond_atom_index = -1;
     Atom_Ranges atom_ranges;
 
     Conf conf;
@@ -62,12 +66,12 @@ private:
     void transitive_transform(const Vec3d o, const Vec3d rax, const Float ra, Atoms& atoms) {
         // std::cout << "NodeId[" << this->node_id.depth_index << "," << this->node_id.width_index << "]" << std::endl;
         //rotate node's atoms
-        for(const Atom_Index i : this->atom_ranges) {
+        for(const int i : this->atom_ranges) {
             Atom& sa = atoms[i];
             sa.set_coord(o + (sa.get_coord() - o)*Quaternion(rax,ra).to_mat3x3());
         }
         //rotate children's atoms in the same way
-        for(std::vector<Node *>::size_type i = 0; i < children.size(); ++i) {
+        for(int i = 0; i < children.size(); ++i) {
             children[i]->transitive_transform(o,rax,ra,atoms);
         }
     }
@@ -93,7 +97,7 @@ public:
     // Node(const Node& n) {
     //     this->parent = nullptr;
     //     this->children = n.children;
-    //     for(std::vector<Node *>::size_type c = 0; c < this->children.size(); ++c) {
+    //     for(int c = 0; c < this->children.size(); ++c) {
     //         this->children[c] = nullptr;
     //     }
     //     this->node_id = n.node_id;
@@ -121,13 +125,13 @@ public:
     void set_rot_angle(const Float rag) {
         this->conf.rot_angle = rag;
     }
-    void set_parent_bond_atom_index(const Atom_Index pbai) {
+    void set_parent_bond_atom_index(const int pbai) {
         this->parent_bond_atom_index = pbai;
     }
-    void set_self_bond_atom_index(const Atom_Index sbai) {
+    void set_self_bond_atom_index(const int sbai) {
         this->self_bond_atom_index = sbai;
     }
-    void set_node_id(const Node_Index di, const Node_Index wi) {
+    void set_node_id(const int di, const int wi) {
         this->node_id.depth_index = di;
         this->node_id.width_index = wi;
     }
@@ -137,7 +141,7 @@ public:
     void add_child_pointer(Node *const p) {
         this->children.push_back(p);
     }
-    void add_atom_index(const Atom_Index ai) {
+    void add_atom_index(const int ai) {
         this->atom_ranges.push_back(ai);
     }
     void transform(Atoms& atoms) {
@@ -161,7 +165,7 @@ public:
         }
 
         //transform children
-        for(std::vector<Node *>::size_type i = 0; i < this->children.size(); ++i) {
+        for(int i = 0; i < this->children.size(); ++i) {
             this->children[i]->transform(atoms);
         }
 
@@ -170,10 +174,10 @@ public:
     Node *const get_self_pointer() {
         return this;
     }
-    const Atom_Index get_parent_bond_atom_index() const {
+    const int get_parent_bond_atom_index() const {
         return this->parent_bond_atom_index;
     }
-    const Atom_Index get_self_bond_atom_index() const {
+    const int get_self_bond_atom_index() const {
         return this->self_bond_atom_index;
     }
     const Node_Id get_node_id() const {
@@ -187,10 +191,14 @@ public:
 
 //Context stores the atom line and its position in the file content while reading
 struct Context {
-    Context_Index index = -1;
+    int index = -1;
     std::string c = "";
     Context() {}
-    Context(const Context_Index ci, const std::string ct) : index(ci), c(ct) {}
+    Context(const int ci, const std::string ct) : index(ci), c(ct) {
+        #ifdef DEBUG
+        assert(ci >= 0);
+        #endif
+    }
 };
 
 inline void write_contexts(const Contexts& cs, const Atoms& as, std::ostream& out = std::cout) {
@@ -207,8 +215,8 @@ inline void write_contexts(const Contexts& cs, const Atoms& as, std::ostream& ou
 }
 inline const Float rmsd_between_atoms(const Atoms& as1, const Atoms& as2) {
     Float rmsd = 0.0;
-    Atom_Index heavy_atom_size = 0;
-    for(Atom_Index i = 0; i < as1.size(); ++i) {
+    int heavy_atom_size = 0;
+    for(int i = 0; i < as1.size(); ++i) {
         const Atom& a2 = as2[i];
         if(a2.get_element_type_name()=="H") continue;
         const Atom& a1 = as1[i];
@@ -228,7 +236,7 @@ struct Conformer {
         write_contexts(cs,this->atoms,out);
     }
 };
-using Conformer_Index = std::vector<Conformer>::size_type;
+// using Conformer_Index = std::vector<Conformer>::size_type;
 using Conformers = std::vector<Conformer>;
 
 
@@ -243,11 +251,11 @@ class Ligand {
 
     Vec3d ref_heavy_atoms_center;//default constructor should be not_a_num
 
-    const Atom_Index add_atom(const Atom a) {
+    const int add_atom(const Atom a) {
         this->atoms.push_back(a);
         return (this->atoms.size()-1);
     }
-    const Atom_Index add_ref_atom(const Atom a) {
+    const int add_ref_atom(const Atom a) {
         this->ref_atoms.push_back(a);
         return (this->ref_atoms.size()-1);
     }
@@ -255,7 +263,7 @@ class Ligand {
 public:
     // friend class Sampling;
     friend void print(const Ligand& l, std::ostream& out);
-    friend void read_ligand_pdbqt(const std::string ligand_path, Ligand& lig, std::ofstream& log);
+    friend void read_ligand_pdbqt(const std::string ligand_path, Ligand& lig, std::ofstream& tee);
     //default constructor because we defined copy constructor
     Ligand() {}
     //move assignment operator//std::sort need this
@@ -291,11 +299,11 @@ public:
     //     this->nodes[0].parent = nullptr;
     //     // std::cout << "finish update Nodes' connections in this tree..." << std::endl;
     // }
-    const Atom_Index atom_num() const {
+    const int atom_num() const {
         return this->atoms.size();
     }
-    const Atom_Index heavy_atom_num() const {
-        Atom_Index heavy_num = 0;
+    const int heavy_atom_num() const {
+        int heavy_num = 0;
         for(const Atom& a : atoms) {
             if(a.get_element_type()!=EL_H) {
                 ++heavy_num;
@@ -357,7 +365,7 @@ public:
         assert((this->nodes.size()-1) == torsional_dofs.size());
 
         //set node conf
-        for(Floats::size_type i = 0; i < torsional_dofs.size(); ++i) {
+        for(int i = 0; i < torsional_dofs.size(); ++i) {
             this->nodes[i+1].conf.rot_angle = torsional_dofs[i];
         }
 
@@ -368,7 +376,7 @@ public:
 
     void reset_atoms_coord_to_ref_atoms_coord() {
         //reassign the inital coord to atoms
-        for(Atom_Index i = 0; i < this->atoms.size(); ++i) {
+        for(int i = 0; i < this->atoms.size(); ++i) {
             this->atoms[i].set_coord(this->ref_atoms[i].get_coord());
         }
     }
@@ -401,7 +409,7 @@ public:
         }
     }
 
-    const Floats::size_type dof_num() const {
+    const int dof_num() const {
         return (6+this->nodes.size()-1);//3 translation 3 overall rotation and nodes().size()-1 torsion
     }
 
@@ -424,19 +432,19 @@ class RNA {
     Atoms atoms;
     Contexts contexts;
 
-    const Atom_Index add_atom(const Atom a) {
+    const int add_atom(const Atom a) {
         this->atoms.push_back(a);
         return (this->atoms.size()-1);
     }
-    const Atom_Index add_ref_atom(const Atom a) {
+    const int add_ref_atom(const Atom a) {
         this->ref_atoms.push_back(a);
         return (this->ref_atoms.size()-1);
     }
 
 public:
     friend void print(const RNA& r, std::ostream& out);
-    friend void read_rna_mol2(const std::string rna_path, RNA& r, std::ostream& log);
-    const Atom_Index atom_num() const {
+    friend void read_rna_mol2(const std::string rna_path, RNA& r, std::ostream& tee);
+    const int atom_num() const {
         return this->atoms.size();
     }
     const Atoms& get_atoms_reference() const {

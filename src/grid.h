@@ -28,29 +28,37 @@ namespace tmd {
 
 enum DISTANCE_TYPE {DISTANCE_FIXED, DISTANCE_ROTOR, DISTANCE_FLEXIBLE};
 
-inline Size_Type checked_multiply(Size_Type i, Size_Type j) {
+inline int checked_multiply(int i, int j) {
+    #ifdef DEBUG
+    assert(i > 0 && j > 0);
+    #endif
 	if(i == 0 || j == 0) return 0;
-	const Size_Type tmp = i * j;
+	const int tmp = i * j;
 	if(tmp < i || tmp < j || tmp / i != j)
 		throw std::bad_alloc(); // can't alloc if the size makes sz wrap around
 	return tmp;
 }
 
-inline Size_Type checked_multiply(Size_Type i, Size_Type j, Size_Type k) {
+inline int checked_multiply(int i, int j, int k) {
 	return checked_multiply(checked_multiply(i, j), k);
 }
 
 template<typename T>
 class Array3d {
-	Size_Type m_i, m_j, m_k;
+	int m_i, m_j, m_k;
 	std::vector<T> m_data;
 public:
-	// Array3d() : m_i(0), m_j(0), m_k(0) {}
-	Array3d(Size_Type i, Size_Type j, Size_Type k, T filler_val) : m_i(i), m_j(j), m_k(k), m_data(checked_multiply(i, j, k),filler_val) {}
-	Size_Type dim0() const { return m_i; }
-	Size_Type dim1() const { return m_j; }
-	Size_Type dim2() const { return m_k; }
-	Size_Type dim(Size_Type i) const {
+	Array3d() : m_i(0), m_j(0), m_k(0) {}
+	Array3d(int i, int j, int k, T filler_val) : m_i(i), m_j(j), m_k(k), m_data(checked_multiply(i, j, k),filler_val) {
+        // std::cout << "calling Array3d" << std::endl;
+        #ifdef DEBUG
+        assert(m_i > 0 && m_j > 0 && m_k > 0);
+        #endif
+    }
+	int dim0() const { return m_i; }
+	int dim1() const { return m_j; }
+	int dim2() const { return m_k; }
+	int dim(int i) const {
 		switch(i) {
 			case 0: return m_i;
 			case 1: return m_j;
@@ -58,64 +66,90 @@ public:
 			default: assert(false); return 0; // to get rid of the warning
 		}
 	}
-	void resize(Size_Type i, Size_Type j, Size_Type k) { // data is essentially garbled
+	void resize(int i, int j, int k) { // data is essentially garbled
+        #ifdef DEBUG
+        assert(i >= m_i && j >= m_j && k >= m_k);
+        assert(i*j*k >= m_i*m_j*m_k);
+        #endif
 		m_i = i;
 		m_j = j;
 		m_k = k;
 		m_data.resize(checked_multiply(i, j, k));
 	}
-	T&       operator()(Size_Type i, Size_Type j, Size_Type k)       { return m_data[i + m_i*(j + m_j*k)]; }
-	const T& operator()(Size_Type i, Size_Type j, Size_Type k) const { return m_data[i + m_i*(j + m_j*k)]; }
+	T& operator()(int i, int j, int k) {
+        #ifdef DEBUG
+        assert(i >= 0 && j >= 0 && k >= 0);
+        #endif
+        return m_data[i + m_i*(j + m_j*k)];
+    }
+	const T& operator()(int i, int j, int k) const {
+        #ifdef DEBUG
+        assert(i >= 0 && j >= 0 && k >= 0);
+        #endif
+        return m_data[i + m_i*(j + m_j*k)];
+    }
 };
 
 
 
 struct Grid {
     bool flag = false;
-    std::vector<Atom_Index> rigid_atoms;
+    std::vector<int> rigid_atoms;
+    Grid() {}
+    Grid(const bool f) : flag(f) {}
 };
-using Grid_Index = std::vector<Grid>::size_type;
 struct Grids {
     Float width;
     Array3d<Grid> g_data;
-    Grid_Index g_i, g_j, g_k;
-    Grid_Index shift_i, shift_j, shift_k;
+    int g_i, g_j, g_k;
+    int shift_i, shift_j, shift_k;
     Grid default_grid;
 public:
     //column-major
-    Grids() : g_i(0), g_j(0), g_k(0), shift_i(0), shift_j(0), shift_k(0), width(0), g_data(0,0,0,default_grid) {}
-    Grids(const Grid_Index i, const Grid_Index j, const Grid_Index k, const Grid_Index si, const Grid_Index sj, const Grid_Index sk, const Float w, const Grid& filler_val) : g_data(i,j,k, filler_val), g_i(i), g_j(j), g_k(k), shift_i(si), shift_j(sj), shift_k(sk), width(w) {}
-    const Grid& operator()(Grid_Index i, Grid_Index j, Grid_Index k) const {
-        Grid_Index gi = this->index(i,j,k);
-        if(gi == -1) {
+    Grids() : g_i(0), g_j(0), g_k(0), shift_i(0), shift_j(0), shift_k(0), width(0) {
+        // std::cout << "grids init" << std::endl;
+    }
+    Grids(const int ii, const int jj, const int kk, const int si, const int sj, const int sk, const Float w, const Grid& filler_val) : g_data(ii,jj,kk,filler_val), g_i(ii), g_j(jj), g_k(kk), shift_i(si), shift_j(sj), shift_k(sk), width(w) {
+        #ifdef DEBUG
+        assert(ii >= 0 && jj >= 0 && kk >= 0);
+        assert(w >= 0.0);
+        #endif
+    }
+    const Grid& operator()(int i, int j, int k) const {
+        if(this->out_boundary(i,j,k)) {
             return this->default_grid;
         }
         else {
-            return g_data(i,j,k);
+            #ifdef DEBUG
+            assert(i-this->shift_i >= 0 && j-this->shift_j >= 0 && k-this->shift_k >= 0);
+            #endif
+            return g_data(i-this->shift_i,j-this->shift_j,k-this->shift_k);
         }
     }
-    Grid& operator()(Grid_Index i, Grid_Index j, Grid_Index k) {
-        Grid_Index gi = this->index(i,j,k);
-        if(gi == -1) {
+    Grid& operator()(int i, int j, int k) {
+        if(this->out_boundary(i,j,k)) {
             return this->default_grid;
         }
         else {
-            return g_data(i,j,k);
+            #ifdef DEBUG
+            assert(i-this->shift_i >= 0 && j-this->shift_j >= 0 && k-this->shift_k >= 0);
+            #endif
+            return g_data(i-this->shift_i,j-this->shift_j,k-this->shift_k);
         }
     }
 
-    Grid_Index index(Grid_Index i, Grid_Index j, Grid_Index k) const {
-        const Grid_Index& ii = i - this->shift_i;
-        const Grid_Index& jj = j - this->shift_j;
-        const Grid_Index& kk = k - this->shift_k;
+    bool out_boundary(int i, int j, int k) const {
+        const int& ii = i - this->shift_i;
+        const int& jj = j - this->shift_j;
+        const int& kk = k - this->shift_k;
         if(kk >= g_k || kk < 0 || jj >= g_j || jj < 0 || ii >= g_i || ii < 0) {
-            return -1;
+            return true;
         }
-		return ii + g_i*jj + g_i*g_j*kk; //column-major
+		return false;
     }
-    Grid_Index dim_1() const { return g_i; }
-	Grid_Index dim_2() const { return g_j; }
-    Grid_Index dim_3() const { return g_k; }
+    int dim_1() const { return g_i; }
+	int dim_2() const { return g_j; }
+    int dim_3() const { return g_k; }
 };
 
 

@@ -12,8 +12,8 @@ class Vec3d {
 public:
 	Vec3d();//default #ifndef NDEBUG will be nan, otherwise not initialize
 	Vec3d(Float x, Float y, Float z);
-	const Float& operator[](Size_Type i) const;//return data[i];
-	      Float& operator[](Size_Type i);//return data[i];
+	const Float& operator[](int i) const;//return data[i];
+	      Float& operator[](int i);//return data[i];
     const Float norm_square() const;
 	const Float norm() const;
 	void normalize();
@@ -29,7 +29,7 @@ public:
 	const Vec3d operator*(const Float s) const;
 	const bool operator==(const Vec3d& rhs) const;
 	void assign(Float s);
-	Size_Type size() const;//return 3;
+	int size() const;//return 3;
 // private:
 	// friend class boost::serialization::access;
 	// template<class Archive>

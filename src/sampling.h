@@ -146,7 +146,7 @@ public:
             assert(false);
         }
         Float score_of_randomized = k_max_float;
-        while(score_of_randomized>0.0) {
+        while(score_of_randomized>100) {
             static int randomized_times = 0;
             randomized_times++;
             const tmd::Vec3d random_xyz = tmd::random_in_box(this->docking_box.corner1, this->docking_box.corner2, generator) - this->lig.get_ref_heavy_center_coord();
@@ -169,7 +169,7 @@ public:
             this->tee << "randomized_times: " << randomized_times << " score: " << score_of_randomized << std::endl;
             if(randomized_times>=10000) {
                 this->tee << "can not be successfully randomized!" << std::endl;
-                assert(false);
+                // assert(false);
             }
         }
         this->tee << "randomized initialized dofs --> ";
@@ -185,10 +185,10 @@ public:
 
         // tmd::Float characteristic_score = (*this)(start_dofs);
 
-        VecDoub dels(start_dofs.size(),0.01);
-        dels[0] = 0.1;
-        dels[1] = 0.1;
-        dels[2] = 0.1;
+        VecDoub dels(start_dofs.size(),0.001);
+        // dels[0] = 0.1;
+        // dels[1] = 0.1;
+        // dels[2] = 0.1;
         Doub ftol = 0.1;
         VecDoub dofs(start_dofs.size(),0.0);
         for(int i = 0; i < start_dofs.size(); ++i) {
@@ -197,10 +197,10 @@ public:
         Amebsa<tmd::Sampling> amebsa(dofs, dels, (*this), ftol);
 
         for(int docking_time = 1; docking_time <= docking_times; ++docking_time) {
-            Doub temperature = 2000;
+            Doub temperature = 10000;
             Bool converged = false;
             while(!converged) {
-                Int Iter = 100;
+                Int Iter = 1000;
                 // if(docking_times >= 3) {
                 //     Iter = 1000;
                 // }

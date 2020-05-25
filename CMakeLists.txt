@@ -1,4 +1,4 @@
-set (BUILD_MODE PROFILE)
+set (BUILD_MODE NORMAL)
 cmake_minimum_required (VERSION 3.5)
 
 project(TMD)

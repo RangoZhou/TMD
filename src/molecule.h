@@ -239,11 +239,13 @@ struct Conformer {
 // using Conformer_Index = std::vector<Conformer>::size_type;
 using Conformers = std::vector<Conformer>;
 
-
+using Coords = std::vector<Vec3d>;
 
 class Ligand {
     Atoms ref_atoms;//store the input atoms from file
+    Coords ref_coords;
     Atoms atoms;//actual atoms reflect different sampled conformations
+    Coords coords;
     // Conformers conformers;//store the important conformations
     Nodes nodes;
     // DOFs dofs;//degrees of freedom: translational dof x,y,z (3) + rotational dof rot_axis,rot_angle (3) + ligand rotational dof len(nodes)-1 (3)// root rot_axis has a constraint which is normal
@@ -251,12 +253,14 @@ class Ligand {
 
     Vec3d ref_heavy_atoms_center;//default constructor should be not_a_num
 
-    const int add_atom(const Atom a) {
+    const int add_atom(const Atom& a) {
         this->atoms.push_back(a);
+        this->coords.push_back(a.get_coord());
         return (this->atoms.size()-1);
     }
-    const int add_ref_atom(const Atom a) {
+    const int add_ref_atom(const Atom& a) {
         this->ref_atoms.push_back(a);
+        this->ref_coords.push_back(a.get_coord());
         return (this->ref_atoms.size()-1);
     }
 

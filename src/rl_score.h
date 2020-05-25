@@ -369,7 +369,7 @@ public:
 
     double LJenergy = 0.;
     double ligand_LJenergy = 0.0;
-    double ligand_ELEenergy = 0.0;
+    // double ligand_ELEenergy = 0.0;
     double ELEenergy = 0.;
     double HBenergy = 0.;
     double POLenergy = 0.0;
@@ -1065,7 +1065,7 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
     //     }
     // }
 
-    P.ligand_ELEenergy = 0.0;
+    // P.ligand_ELEenergy = 0.0;
     P.ligand_LJenergy = 0.0;
     P.ligand_POLenergy = 0.0;
     P.ligand_SELFenergy = 0.0;
@@ -1082,7 +1082,7 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
                 if(P.bond_type_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) == tmd::DUMMY_BOND) {
                     continue;
                 }
-                P.ligand_ELEenergy = P.ligand_ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.lig.noH[j].charge / cal_dis;
+                // P.ligand_ELEenergy = P.ligand_ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.lig.noH[j].charge / cal_dis;
 
                 const double& equ_dis = (P.lig.noH[j].radius + P.lig.noH[i].radius);
                 // P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) = cal_dis;
@@ -1232,9 +1232,9 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
             P.re_weight[3] * P.ligand_SELFenergy +
             P.re_weight[4] * P.SASAenergy +
             P.re_weight[5] * P.HBenergy +
-            P.re_weight[6] * P.RNA_SELFenergy +
-            P.ligand_ELEenergy +
-            P.ligand_LJenergy;
+            P.re_weight[6] * P.RNA_SELFenergy
+            // +P.ligand_ELEenergy
+            +P.ligand_LJenergy;
 
     // std::cout << "LJenergy: " << P.LJenergy << std::endl;
     // std::cout << "ELEenergy: " << P.ELEenergy << std::endl;

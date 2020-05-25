@@ -22,9 +22,12 @@
 
 #src
 /src/doc/
+# /src/nr/
+/src/tmp/
 
 #test
 /test/docking_test/
 /test/script_test/
 /test/profile_test/
 /test/rl_score_test/
+/test/lizhen/

@@ -399,6 +399,8 @@ try {
 
     tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),pocket,Sample_Type,Optimizer_Type,generator,tee);
 
+    tee << "scoring evaluate for input conf: " << scoring_function.evaluate() << std::endl;
+
     if(randomize_only) {
         tee << "finish randomize only!" << std::endl;
         return 0;

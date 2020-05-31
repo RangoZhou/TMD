@@ -102,10 +102,15 @@ namespace tmd {
 		return Node_Info(std::stoi(vs[1])-1, std::stoi(vs[2])-1, ni);
 	}
 
-	inline const Atom parse_pdbqt_atom(const int& ci, const std::string &sline) {
-		const std::string autodock_atom_type = trim(sline.substr(77,2));
-		const std::string sybyl_atom_type = trim(sline.substr(82,5));
-		Atom atom(sybyl_atom_type,autodock_atom_type,SYBYL_AD4);
+	inline const Atom parse_pdbqt_atom(const std::string &sline) {
+		const std::string autodock_atom_type_name = trim(sline.substr(77,2));
+		const std::string sybyl_atom_type_name = trim(sline.substr(82,5));
+		Atom atom;
+		atom.set_ad4_type(string_to_ad4_type(autodock_atom_type_name));
+		atom.set_sybyl_type(string_to_sybyl_type(sybyl_atom_type_name));
+		atom.set_element_type(sybyl_type_to_element_type(atom.get_sybyl_type()));
+		assert(atom.get_sybyl_type() != SYBYL_Unk && atom.get_ad4_type() != AD4_Unk);
+		assert(atom.get_element_type() == ad4_type_to_element_type(atom.get_ad4_type()));
 		atom.set_charge(std::stod(sline.substr(70,6)));
 		const Float x = std::stod(trim(sline.substr(30,8)));
 		const Float y = std::stod(trim(sline.substr(38,8)));
@@ -123,7 +128,7 @@ namespace tmd {
 		} else {
 			atom.set_res_serial(0);
 		}
-		atom.set_context_index(ci);
+		// atom.set_context_index(ci);
 		return atom;
 	}
 
@@ -142,17 +147,18 @@ namespace tmd {
 		std::vector<Node_Info> node_infos;
 		std::map<std::string,int> node_id_to_node_index;
 		while(std::getline(in_ligand,sline)) {
+			if(sline=="") continue;
+			//to_pdbqt_parse_type do not accept empty string
 			PDBQT_PARSE_TYPE ppt = to_pdbqt_parse_type(sline);
 			int line_index = ligand.contexts.size();
 			if(ppt!=PDBQT_BOND) {
-				ligand.contexts.push_back(Context(line_index,sline));
+				ligand.contexts.push_back(Context(-1,sline));
 			}
 			// tee << sline << std::endl;
-			if(sline=="") continue;
 			switch(ppt) {
 				case PDBQT_ATOM:
 				case PDBQT_HETATM: {
-						const Atom a = parse_pdbqt_atom(line_index,sline);
+						const Atom a = parse_pdbqt_atom(sline);
 						int a_i = ligand.add_atom(a);
 						if(a_i==0) {
 							//make sure ligand atom start from 1
@@ -160,6 +166,7 @@ namespace tmd {
 						}
 						int r_a_i = ligand.add_ref_atom(a);
 						assert(a_i == r_a_i);
+						ligand.contexts[ligand.contexts.size()-1].atom_index = a_i;
 						Node_Id ni = Node_Id(depth_level,width_in_each_depth[depth_level]);
 						atom_tags.push_back(Atom_Tag(a_i,ni));
 						assert(a_i==atom_tags.size()-1);

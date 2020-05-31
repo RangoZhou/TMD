@@ -22,8 +22,7 @@
 
 #src
 /src/doc/
-# /src/nr/
-/src/tmp/
+/src/nr/
 
 #test
 /test/docking_test/

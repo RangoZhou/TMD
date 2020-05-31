@@ -8,7 +8,7 @@ namespace tmd {
 Vec3d::Vec3d() {
 	data[0] = data[1] = data[2] = k_not_a_num;
 }
-Vec3d::Vec3d(Float x, Float y, Float z) {
+Vec3d::Vec3d(const Float x, const Float y, const Float z) {
 	data[0] = x;
 	data[1] = y;
 	data[2] = z;

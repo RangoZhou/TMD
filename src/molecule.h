@@ -11,22 +11,12 @@
 #include "vec3d.h"
 #include "mat3x3.h"
 #include "quaternion.h"
+#include "context.h"
+// #include "conformer.h"
 
 namespace tmd {
 
-class Node;//forward declaration
-struct Conf;//forward declaration
-struct Node_Id;//forward declaration
-class Ligand;//forward declaration
-using Node_Ids = std::vector<Node_Id>;
-using Nodes = std::vector<Node>;
-// using Node_Index = std::vector<Node>::size_type;
 using Atom_Ranges = std::vector<int>;
-
-enum LIGAND_SAMPLE_MODE {LIGAND_SAMPLE_RIGID,LIGAND_SAMPLE_FLEXIBLE};
-// using DOF = Float;
-// using DOFs = std::vector<Float>;
-// using Confs = std::vector<Conf> ;
 
 //for non root nodes, Conf defines its rot_axis as the axis along the rotatable bond from parent node to itself, and rot_angle is the angle that will be used to rotate the bond (smapled), the origin is the coordinate of the parent atom of the rotatable bond
 //for root nodes, rot_axis and rot_angle are sampled and origin is defined as geometric center
@@ -47,6 +37,8 @@ struct Node_Id {
         #endif
     }
 };
+
+using Node_Ids = std::vector<Node_Id>;
 
 //each Node is linked to its parent and children through pointers and the transformation operations performed on one Node will be transmitted to all its children and children's children util reach the end
 class Node {
@@ -187,38 +179,14 @@ public:
         return this->conf;
     }
 };
+using Nodes = std::vector<Node>;
 
-
-//Context stores the atom line and its position in the file content while reading
-struct Context {
-    int index = -1;
-    std::string c = "";
-    Context() {}
-    Context(const int ci, const std::string ct) : index(ci), c(ct) {
-        #ifdef DEBUG
-        assert(ci >= 0);
-        #endif
-    }
-};
-
-inline void write_contexts(const Contexts& cs, const Atoms& as, std::ostream& out = std::cout) {
-    Contexts tmp_contexts = cs;
-    for(const Atom& a : as) {
-        std::ostringstream oss;
-        oss.fill(' ');
-        oss << std::setw(8) << std::fixed << std::setprecision(3) << a.get_coord()[0] << std::setw(8) << a.get_coord()[1] << std::setw(8) << a.get_coord()[2];
-        tmp_contexts[a.get_context_index()].c.replace(30, 24, oss.str());//24 is the string size, default fill with space
-    }
-    for(const Context& c : tmp_contexts) {
-        out << c.c << std::endl;
-    }
-}
 inline const Float rmsd_between_atoms(const Atoms& as1, const Atoms& as2) {
     Float rmsd = 0.0;
     int heavy_atom_size = 0;
     for(int i = 0; i < as1.size(); ++i) {
         const Atom& a2 = as2[i];
-        if(a2.get_element_type_name()=="H") continue;
+        if(a2.get_element_type() == EL_H) continue;
         const Atom& a1 = as1[i];
         ++heavy_atom_size;
         rmsd += (a1.get_coord() - a2.get_coord()).norm_square();
@@ -226,26 +194,12 @@ inline const Float rmsd_between_atoms(const Atoms& as1, const Atoms& as2) {
     return std::sqrt(rmsd/Float(heavy_atom_size));
 }
 
-struct Conformer {
-    Float score;
-    Float rmsd;
-    Atoms atoms;
-    // Conformer() {}
-    Conformer(const Float s, const Float r, const Atoms& a) : score(s), rmsd(r), atoms(a) {}
-    void write(const Contexts& cs, std::ostream& out = std::cout) {
-        write_contexts(cs,this->atoms,out);
-    }
-};
-// using Conformer_Index = std::vector<Conformer>::size_type;
-using Conformers = std::vector<Conformer>;
-
-using Coords = std::vector<Vec3d>;
-
+enum LIGAND_SAMPLE_MODE {LIGAND_SAMPLE_RIGID,LIGAND_SAMPLE_FLEXIBLE};
 class Ligand {
     Atoms ref_atoms;//store the input atoms from file
-    Coords ref_coords;
+    // Coords ref_coords;
     Atoms atoms;//actual atoms reflect different sampled conformations
-    Coords coords;
+    // Coords coords;
     // Conformers conformers;//store the important conformations
     Nodes nodes;
     // DOFs dofs;//degrees of freedom: translational dof x,y,z (3) + rotational dof rot_axis,rot_angle (3) + ligand rotational dof len(nodes)-1 (3)// root rot_axis has a constraint which is normal
@@ -255,12 +209,12 @@ class Ligand {
 
     const int add_atom(const Atom& a) {
         this->atoms.push_back(a);
-        this->coords.push_back(a.get_coord());
+        // this->coords.push_back(a.get_coord());
         return (this->atoms.size()-1);
     }
     const int add_ref_atom(const Atom& a) {
         this->ref_atoms.push_back(a);
-        this->ref_coords.push_back(a.get_coord());
+        // this->ref_coords.push_back(a.get_coord());
         return (this->ref_atoms.size()-1);
     }
 
@@ -339,34 +293,41 @@ public:
         return this->ref_heavy_atoms_center;
     }
 
-    void translate(const Vec3d shift) {
+    void translate(const Vec3d& shift) {
         //check if ref_atoms and atoms contain same num of atoms
+        #ifdef DEBUG
         assert(this->atoms.size()==this->ref_atoms.size());
+        #endif
         //first, ligand translation
         for(auto& a : this->atoms) {
             a.set_coord(a.get_coord()+shift);
         }
     }
 
-    void rotate(const Vec3d rot_origin, const Vec3d rot_axis, const Float rot_angle) {
+    void rotate(const Vec3d& rot_origin, const Vec3d& rot_axis, const Float& rot_angle) {
         //check if ref_atoms and atoms contain same num of atoms
+        #ifdef DEBUG
         assert(this->atoms.size()==this->ref_atoms.size());
+        #endif
 
         this->nodes[0].conf.rot_angle = rot_angle;
         this->nodes[0].conf.rot_axis = rot_axis;
 
         // this->nodes[0].conf.origin = std::accumulate(this->atoms.begin(),this->atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b){return a + b.get_coord();})*(1.0/Float(this->atoms.size()));
         this->nodes[0].conf.origin = rot_origin;
-        assert(this->atoms.size()!=0);//recalculate the center of the ligand, and assign that to root conf.origin
-        //rot_axis and rot_angle are sampled from other place
+        #ifdef DEBUG
+        assert(this->atoms.size()!=0);
+        #endif
         this->nodes[0].transitive_transform(this->nodes[0].conf.origin, this->nodes[0].conf.rot_axis, this->nodes[0].conf.rot_angle, this->atoms);
     }
 
-    void transform(const Floats torsional_dofs) {
+    void transform(const Floats& torsional_dofs) {
+        #ifdef DEBUG
         //check if ref_atoms and atoms contain same num of atoms
         assert(this->atoms.size()==this->ref_atoms.size());
         //make sure dofs and nodes has the same number
         assert((this->nodes.size()-1) == torsional_dofs.size());
+        #endif
 
         //set node conf
         for(int i = 0; i < torsional_dofs.size(); ++i) {
@@ -387,24 +348,34 @@ public:
 
     void sample(const Floats& dofs, const LIGAND_SAMPLE_MODE& l_mode) {
         this->reset_atoms_coord_to_ref_atoms_coord();
+        #ifdef DEBUG
         assert(dofs.size() >= 6);
-        const Vec3d shift = Vec3d(dofs[0],dofs[1],dofs[2]);
+        #endif
+        const Vec3d& shift = Vec3d(dofs[0],dofs[1],dofs[2]);
         this->translate(shift);
 
-        const Vec3d rot_origin = this->ref_heavy_atoms_center + shift;
+        const Vec3d& rot_origin = this->ref_heavy_atoms_center + shift;
         const Vec3d rot_vector(dofs[3],dofs[4],dofs[5]);
-        const Float rot_angle = rot_vector.norm();
+        const Float& rot_angle = rot_vector.norm();
         if(eq(std::abs(rot_angle),0.0)) {
             const Vec3d rot_axis(0,0,1);
             this->rotate(rot_origin, rot_axis, 0.0);
         } else {
             const Vec3d rot_axis = rot_vector * (1.0/rot_angle);
+            #ifdef DEBUG
+            if(!eq(rot_axis.norm(),1.0)) {
+                std::cout << rot_angle << " " << rot_axis[0] << " " << rot_axis[1] << " " << rot_axis[2] <<std::endl;
+                assert(false);
+            }
             assert(eq(rot_axis.norm(),1.0));
+            #endif
             this->rotate(rot_origin, rot_axis, rot_angle);
         }
 
         if(l_mode == LIGAND_SAMPLE_FLEXIBLE) {
+            #ifdef DEBUG
             assert(dofs.size() == this->dof_num());
+            #endif
             Floats torsional_dofs(dofs.size()-6,0.0);
             for(int i = 6; i < dofs.size(); ++i) {
                 torsional_dofs[i-6] = dofs[i];
@@ -421,11 +392,11 @@ public:
         return rmsd_between_atoms(this->ref_atoms, this->atoms);
     }
 
-    void write(std::ostream& out = std::cout) {
+    void write(std::ostream& out = std::cout) const {
         write_contexts(this->contexts,this->atoms,out);
     }
 
-    void write_ref(std::ostream& out = std::cout) {
+    void write_ref(std::ostream& out = std::cout) const {
         write_contexts(this->contexts,this->ref_atoms,out);
     }
 };
@@ -434,14 +405,18 @@ public:
 class RNA {
     Atoms ref_atoms;
     Atoms atoms;
+    // Coords ref_coords;
+    // Coords coords;
     Contexts contexts;
 
-    const int add_atom(const Atom a) {
+    const int add_atom(const Atom& a) {
         this->atoms.push_back(a);
+        // this->coords.push_back(a.get_coord());
         return (this->atoms.size()-1);
     }
-    const int add_ref_atom(const Atom a) {
+    const int add_ref_atom(const Atom& a) {
         this->ref_atoms.push_back(a);
+        // this->ref_coords.push_back(a.get_coord());
         return (this->ref_atoms.size()-1);
     }
 

@@ -161,7 +161,7 @@ converged: 0 score: -12.4967 temperature: 0.0404838 already_saved_ligands -> 501
 converged: 0 score: -12.4967 temperature: 0.0364354 already_saved_ligands -> 51010
 converged: 0 score: -12.4967 temperature: 0.0327919 already_saved_ligands -> 51834
 converged: 1 score: -12.4967 temperature: 0.0295127 already_saved_ligands -> 52012
-finish 1th stimulated annealing...
+finish 1th simulated annealing...
 min dofs: -2.08439 -2.89398 -1.03548 -2.57139 9.28504 -8.03669 
 min score: -12.4967
 min score's rmsd: 0.627833

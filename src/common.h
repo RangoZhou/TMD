@@ -7,7 +7,7 @@
 namespace tmd {
 
 using Float = double;
-using Floats = std::vector<double>;
+using Floats = std::vector<Float>;
 // using Size_Type = std::size_t;
 // using Size_Types = std::vector<std::size_t>;
 // using Float_Pair = std::pair<Float,Float>;

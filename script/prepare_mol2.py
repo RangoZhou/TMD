@@ -12,13 +12,14 @@ with open('/tmp/prepare_tmd.tmp') as f:
     input_file = items[0]
     output_file = items[1]
     add_charge = items[2]
+    charge_type = items[3]
 # print(input_file, output_file)
 # os.system('pwd')
 runCommand("open "+input_file)
 if add_charge == "True":
     runCommand("delete element.H")
     runCommand("addh")
-    runCommand("addcharge all method gas")
+    runCommand("addcharge all method "+charge_type.lower())
 s="write format mol2 0 {}".format(output_file)
 runCommand(s)
 runCommand("close 0")

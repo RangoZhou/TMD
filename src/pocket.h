@@ -116,7 +116,7 @@ public:
         for (int i = shift_x; i < size_x+shift_x; i++) {
             for (int j = shift_y; j < size_y+shift_y; j++) {
                 for (int k = shift_z; k < size_z+shift_z; k++) {
-                    if(this->grids(i,j,k).flag) {
+                    if(this->grids.at(i,j,k).flag) {
                         grids_true_count++;
                     }
                 }
@@ -126,8 +126,8 @@ public:
 
         //////kick out girds on RNA
         for(const Atom& rr : rna_heavy_atoms) {
-            const Vec3d& grid_min_vec = (rr.get_coord()-Vec3d(1,1,1)*(rr.get_element_vdw_radius()+radius_small_sphere)) * (1.0/grid_width);
-            const Vec3d& grid_max_vec = (rr.get_coord()+Vec3d(1,1,1)*(rr.get_element_vdw_radius()+radius_small_sphere)) * (1.0/grid_width) + Vec3d(1,1,1);
+            const Vec3d& grid_min_vec = (rr.get_coord()-Vec3d(1,1,1)*(rr.get_vdw_radius()+radius_small_sphere)) * (1.0/grid_width);
+            const Vec3d& grid_max_vec = (rr.get_coord()+Vec3d(1,1,1)*(rr.get_vdw_radius()+radius_small_sphere)) * (1.0/grid_width) + Vec3d(1,1,1);
 
             int xmin = grid_min_vec[0];
             int xmax = grid_max_vec[0];
@@ -149,10 +149,10 @@ public:
             for(int j=ymin; j<=ymax; j++)
             for(int k=zmin; k<=zmax; k++)
             {
-                if(this->grids(i,j,k).flag == true)
+                if(this->grids.at(i,j,k).flag == true)
                 {
                     const double dis = (Vec3d(grid_width*i,grid_width*j,grid_width*k) - rr.get_coord()).norm();
-                    if( dis < rr.get_element_covalent_radius() + radius_small_sphere) {
+                    if( dis < rr.get_covalent_radius() + radius_small_sphere) {
                         this->grids(i,j,k).flag = false;
                         grids_true_count--;
                     }
@@ -174,7 +174,7 @@ public:
 
             int totalblock,blockrx=0,blocklx=0,blockry=0,blockly=0,blockrz=0,blocklz=0;
 
-            if(this->grids(i,j,k).flag == true) {
+            if(this->grids.at(i,j,k).flag == true) {
 
                 for(const Atom& a : rna_heavy_atoms){
                     const Vec3d& a_coord = a.get_coord();
@@ -185,42 +185,42 @@ public:
                     if(blockrx==0){
                         if(a_coord[0] < xx && xx < a_coord[0] + radius_large_sphere) {
                             double dd = sqrt(disyy+diszz);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blockrx=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blockrx=1;
                         }
                     }
 
                     if(blocklx==0){
                         if(a_coord[0] > xx && xx > a_coord[0] - radius_large_sphere) {
                             double dd = sqrt(disyy+diszz);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blocklx=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blocklx=1;
                         }
                     }
 
                     if(blockry==0){
                         if(a_coord[1] < yy && yy < a_coord[1] + radius_large_sphere) {
                             double dd = sqrt(disxx+diszz);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blockry=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blockry=1;
                         }
                     }
 
                     if(blockly==0){
                         if(a_coord[1] > yy && yy > a_coord[1] - radius_large_sphere) {
                             double dd = sqrt(disxx+diszz);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blockly=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blockly=1;
                         }
                     }
 
                     if(blockrz==0){
                         if(a_coord[2] < zz && zz < a_coord[2] + radius_large_sphere) {
                             double dd = sqrt(disyy+disxx);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blockrz=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blockrz=1;
                         }
                     }
 
                     if(blocklz==0){
                         if(a_coord[2] > zz && zz > a_coord[2] - radius_large_sphere) {
                             double dd = sqrt(disyy+disxx);
-                            if(dd < a.get_element_covalent_radius() + radius_small_sphere) blocklz=1;
+                            if(dd < a.get_covalent_radius() + radius_small_sphere) blocklz=1;
                         }
 
                     }
@@ -240,7 +240,7 @@ public:
                     //     exit(2);
                     // }
                 } else {
-                    this->grids(i,j,k).flag == false;
+                    this->grids(i,j,k).flag = false;
                     grids_true_count--;
                     assert(grids_true_count>=0);
                 }

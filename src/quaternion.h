@@ -22,6 +22,11 @@ public:
         data[3] = r4;
     }
     Quaternion(const Vec3d& ax, Float ang) { // angle in radian, axis is assumed to be a unit vector
+        #ifdef DEBUG
+        if(!eq(ax.norm(), 1)) {
+            std::cout << ax[0] << " " << ax[1] << " " << ax[2] << " " << ang << std::endl;
+        }
+        #endif
         assert(eq(ax.norm(), 1));
         normalize_angle(ang); // this is probably only necessary if angles can be very big
         const Float c = std::cos(ang/2);
@@ -173,12 +178,12 @@ public:
             Vec3d axis(this->r2(), this->r3(), this->r4());
             const Float s = std::sin(angle/2); // perhaps not very efficient to calculate sin of acos
             if(std::abs(s) < k_epsilon) {
-                return zero_vec3d;
+                return k_zero_vec3d;
             }
             axis *= (angle / s);
             return axis;
         } else { // when c = -1 or 1, angle/2 = 0 or pi, therefore angle = 0
-            return zero_vec3d;
+            return k_zero_vec3d;
         }
     }
 

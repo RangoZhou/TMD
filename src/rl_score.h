@@ -53,7 +53,7 @@ struct atom_info
     double z;
     string sybyl_type;
     string resname;
-    int reseq;
+    // int reseq;
     double charge;
     string element;
     double radius;
@@ -153,6 +153,7 @@ public:
                 a.born_scale = CC.born_scale_C;
                 a.type_idx = 6;
             }
+            wH.push_back(a);
 
             if(a.element != "H" && a.element != "h")
             {
@@ -167,7 +168,6 @@ public:
             {
                 HH.push_back(a);
             }
-            wH.push_back(a);
         }
         // xcen/=(1.0*noH.size());
         // ycen/=(1.0*noH.size());
@@ -406,9 +406,9 @@ public:
     // tmd::Strictly_Triangular_Matrix<double> lig_dis_mat;
     tmd::Strictly_Triangular_Matrix<double> complex_dis_mat;
     tmd::Strictly_Triangular_Matrix<double> complex_dis_square_mat;
-    double SumSASA_ligand;
-    double SumSASA_RNA;
-    double SumSASA_complex;
+    // double SumSASA_ligand;
+    // double SumSASA_RNA;
+    // double SumSASA_complex;
 
     // void print_lig_after_born_radius_table() {
     //     print_vector("lig_after_born_radius_table",this->lig_after_born_radius_table);
@@ -445,16 +445,22 @@ inline const double min(const double a, const double b)
         return (b);
 }
 
+// enum RL_SCORE_MODE {RL_LJ_ONLY,RL_ALL};
 class RL_Score {
     // std::vector<lz::pocket_info> pockets;
     parameter P;
     std::ostream& tee;
+    // RL_SCORE_MODE RL_Score_Mode = RL_ALL;
 public:
     RL_Score(std::ostream& lg) : tee(lg) {
         tee << "RL_Score init" << std::endl;
     }
     void init(const tmd::RNA& rna, const tmd::Ligand& lig);
     const double evaluate(const tmd::RNA& rna, const tmd::Ligand& lig);
+
+    // void set_mode(const RL_SCORE_MODE& rl_sm) {
+    //     this->RL_Score_Mode = rl_sm;
+    // }
 };
 
 
@@ -735,17 +741,17 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
     const int sasa_max_grid_x = (*sasa_grid_x_set.end());
     const int sasa_max_grid_y = (*sasa_grid_y_set.end());
     const int sasa_max_grid_z = (*sasa_grid_z_set.end());
-    const int sasa_size_x = sasa_max_grid_x - sasa_min_grid_x;
-    const int sasa_size_y = sasa_max_grid_y - sasa_min_grid_y;
-    const int sasa_size_z = sasa_max_grid_z - sasa_min_grid_z;
-    P.sasa_grids = tmd::Grids(sasa_size_x,sasa_size_y,sasa_size_z,sasa_min_grid_x,sasa_min_grid_y,sasa_min_grid_z,sasa_grid_width,tmd::Grid());
+    const int sasa_size_x = sasa_max_grid_x - sasa_min_grid_x + 1;
+    const int sasa_size_y = sasa_max_grid_y - sasa_min_grid_y + 1;
+    const int sasa_size_z = sasa_max_grid_z - sasa_min_grid_z + 1;
+    P.sasa_grids = tmd::Grids(sasa_size_x,sasa_size_y,sasa_size_z,sasa_min_grid_x,sasa_min_grid_y,sasa_min_grid_z,sasa_grid_width,tmd::Grid(false));
 
     for(int i = sasa_min_grid_x; i <= sasa_max_grid_x; ++i) {
         for(int j = sasa_min_grid_y; j <= sasa_max_grid_y; ++j) {
             for(int k = sasa_min_grid_z; k <= sasa_max_grid_z; ++k) {
                 const std::string& grid_name = std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
                 if(sasa_grid_map.find(grid_name) != sasa_grid_map.end()) {
-                    P.sasa_grids(i,j,k) = sasa_grid_map.at(grid_name);
+                    P.sasa_grids.assign(i,j,k,sasa_grid_map.at(grid_name));
                 }
             }
         }
@@ -818,17 +824,17 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
     const int lj_max_grid_x = (*lj_grid_x_set.end());
     const int lj_max_grid_y = (*lj_grid_y_set.end());
     const int lj_max_grid_z = (*lj_grid_z_set.end());
-    const int lj_size_x = lj_max_grid_x - lj_min_grid_x;
-    const int lj_size_y = lj_max_grid_y - lj_min_grid_y;
-    const int lj_size_z = lj_max_grid_z - lj_min_grid_z;
-    P.lj_grids = tmd::Grids(lj_size_x,lj_size_y,lj_size_z,lj_min_grid_x,lj_min_grid_y,lj_min_grid_z,lj_grid_width,tmd::Grid());
+    const int lj_size_x = lj_max_grid_x - lj_min_grid_x + 1;
+    const int lj_size_y = lj_max_grid_y - lj_min_grid_y + 1;
+    const int lj_size_z = lj_max_grid_z - lj_min_grid_z + 1;
+    P.lj_grids = tmd::Grids(lj_size_x,lj_size_y,lj_size_z,lj_min_grid_x,lj_min_grid_y,lj_min_grid_z,lj_grid_width,tmd::Grid(false));
 
     for(int i = lj_min_grid_x; i <= lj_max_grid_x; ++i) {
         for(int j = lj_min_grid_y; j <= lj_max_grid_y; ++j) {
             for(int k = lj_min_grid_z; k <= lj_max_grid_z; ++k) {
                 const std::string& grid_name = std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
                 if(lj_grid_map.find(grid_name) != lj_grid_map.end()) {
-                    P.lj_grids(i,j,k) = lj_grid_map.at(grid_name);
+                    P.lj_grids.assign(i,j,k,lj_grid_map.at(grid_name));
                 }
             }
         }
@@ -889,125 +895,131 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
         {
             if (i < j)
             {
-                const double& dis =
+                double dis_square =
                     (P.complex.noH[j].x - P.complex.noH[i].x) * (P.complex.noH[j].x - P.complex.noH[i].x) +
                     (P.complex.noH[j].y - P.complex.noH[i].y) * (P.complex.noH[j].y - P.complex.noH[i].y) +
                     (P.complex.noH[j].z - P.complex.noH[i].z) * (P.complex.noH[j].z - P.complex.noH[i].z);
-                P.complex_dis_square_mat(i,j) = dis;
-                P.complex_dis_mat(i,j) = sqrt(dis);
+
+                if(tmd::eq(dis_square,0)) {
+                    dis_square = 0.0000000000000001;
+                }
+                P.complex_dis_square_mat(i,j) = dis_square;
+                P.complex_dis_mat(i,j) = sqrt(dis_square);
             }
         }
     }
 
-    // std::cout << "update born raidus for ligand every time" << std::endl;
-    //update born raidus for ligand every time
-    ///////////////////////////////////////////////
-    /// ligand //////////////////////////////////////
-    P.lig_born_radius_table = vector<double>(P.lig_heavy_size,0.0);
-    for (int i = 0; i < P.lig_heavy_size; i++)
-    { // start to calculate rb0
-        double Lij, Uij, dis;
-        double intb = 0;
-        double radi = P.lig.noH[i].radius;
-        for (int j = 0; j < P.lig_heavy_size; j++)
-        {
-            if (j!= i)
+    // if(this->RL_Score_Mode == RL_ALL) {
+        // std::cout << "update born raidus for ligand every time" << std::endl;
+        //update born raidus for ligand every time
+        ///////////////////////////////////////////////
+        /// ligand //////////////////////////////////////
+        P.lig_born_radius_table = vector<double>(P.lig_heavy_size,0.0);
+        for (int i = 0; i < P.lig_heavy_size; i++)
+        { // start to calculate rb0
+            double Lij, Uij, dis;
+            double intb = 0;
+            double radi = P.lig.noH[i].radius;
+            for (int j = 0; j < P.lig_heavy_size; j++)
             {
-                if(i < j) {
-                    dis = P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
-                } else {
-                    dis = P.complex_dis_mat(j+P.rna_heavy_size,i+P.rna_heavy_size);
-                }
-                double radj = P.lig.noH[j].radius;
-                double radc = dis + P.lig.noH[j].born_scale * radj;
-                if (radi >= radc)
+                if (j!= i)
                 {
-                    Lij = 1.;
-                    Uij = 1.;
-                }
-                else
-                {
-                    if (radi > (dis - P.lig.noH[j].born_scale * radj))
+                    if(i < j) {
+                        dis = P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
+                    } else {
+                        dis = P.complex_dis_mat(j+P.rna_heavy_size,i+P.rna_heavy_size);
+                    }
+                    double radj = P.lig.noH[j].radius;
+                    double radc = dis + P.lig.noH[j].born_scale * radj;
+                    if (radi >= radc)
                     {
-                        Lij = radi;
+                        Lij = 1.;
+                        Uij = 1.;
                     }
                     else
                     {
-                        Lij = dis - P.lig.noH[j].born_scale * radj;
+                        if (radi > (dis - P.lig.noH[j].born_scale * radj))
+                        {
+                            Lij = radi;
+                        }
+                        else
+                        {
+                            Lij = dis - P.lig.noH[j].born_scale * radj;
+                        }
+                        Uij = dis + P.lig.noH[j].born_scale * radj;
                     }
-                    Uij = dis + P.lig.noH[j].born_scale * radj;
+                    intb = intb + 0.5 * ((1. / Lij - 1. / Uij) + (P.lig.noH[j].born_scale * P.lig.noH[j].born_scale * radj * radj / (4. * dis) - dis / 4.) * (1. / (Lij * Lij) - 1. / (Uij * Uij)) + (1. / (2. * dis)) * log(Lij / Uij));
                 }
-                intb = intb + 0.5 * ((1. / Lij - 1. / Uij) + (P.lig.noH[j].born_scale * P.lig.noH[j].born_scale * radj * radj / (4. * dis) - dis / 4.) * (1. / (Lij * Lij) - 1. / (Uij * Uij)) + (1. / (2. * dis)) * log(Lij / Uij));
             }
+            P.lig_born_radius_table[i] = 1. / (1. / radi - intb);
+            //  printf("%d %lf %lf\n",i,rb0_ligand[i],rrr_ligand[i]);
         }
-        P.lig_born_radius_table[i] = 1. / (1. / radi - intb);
-        //  printf("%d %lf %lf\n",i,rb0_ligand[i],rrr_ligand[i]);
-    }
 
-    //update complex born radius every time
-    // std::cout << "start Born_Radius_Complex" << std::endl;
-    P.complex_born_radius_table  = vector<double>(P.complex_heavy_size,0.0);
-    for (int i = 0; i < P.complex_heavy_size; i++)
-    { // start to calculate rb0
-        double Lij, Uij, dis;
-        double intb = 0;
-        double radi = P.complex.noH[i].radius;
-        for (int j = 0; j < P.complex_heavy_size; j++)
-        {
-            if(i < P.rna_heavy_size && j < P.rna_heavy_size) {
-                continue;
-            }
-            if (j!= i)
+        //update complex born radius every time
+        // std::cout << "start Born_Radius_Complex" << std::endl;
+        P.complex_born_radius_table  = vector<double>(P.complex_heavy_size,0.0);
+        for (int i = 0; i < P.complex_heavy_size; i++)
+        { // start to calculate rb0
+            double Lij, Uij, dis;
+            double intb = 0;
+            double radi = P.complex.noH[i].radius;
+            for (int j = 0; j < P.complex_heavy_size; j++)
             {
-                if(i < j) {
-                    dis = P.complex_dis_mat(i,j);
-                } else {
-                    dis = P.complex_dis_mat(j,i);
+                if(i < P.rna_heavy_size && j < P.rna_heavy_size) {
+                    continue;
                 }
-                double radj = P.complex.noH[j].radius;
-                double radc = dis + P.complex.noH[j].born_scale * radj;
-                if (radi >= radc)
+                if (j!= i)
                 {
-                    Lij = 1.;
-                    Uij = 1.;
-                }
-                else
-                {
-                    if (radi > (dis - P.complex.noH[j].born_scale * radj))
+                    if(i < j) {
+                        dis = P.complex_dis_mat(i,j);
+                    } else {
+                        dis = P.complex_dis_mat(j,i);
+                    }
+                    double radj = P.complex.noH[j].radius;
+                    double radc = dis + P.complex.noH[j].born_scale * radj;
+                    if (radi >= radc)
                     {
-                        Lij = radi;
+                        Lij = 1.;
+                        Uij = 1.;
                     }
                     else
                     {
-                        Lij = dis - P.complex.noH[j].born_scale * radj;
+                        if (radi > (dis - P.complex.noH[j].born_scale * radj))
+                        {
+                            Lij = radi;
+                        }
+                        else
+                        {
+                            Lij = dis - P.complex.noH[j].born_scale * radj;
+                        }
+                        Uij = dis + P.complex.noH[j].born_scale * radj;
                     }
-                    Uij = dis + P.complex.noH[j].born_scale * radj;
+                    intb = intb + 0.5 * ((1. / Lij - 1. / Uij) + (P.complex.noH[j].born_scale * P.complex.noH[j].born_scale * radj * radj / (4. * dis) - dis / 4.) * (1. / (Lij * Lij) - 1. / (Uij * Uij)) + (1. / (2. * dis)) * log(Lij / Uij));
                 }
-                intb = intb + 0.5 * ((1. / Lij - 1. / Uij) + (P.complex.noH[j].born_scale * P.complex.noH[j].born_scale * radj * radj / (4. * dis) - dis / 4.) * (1. / (Lij * Lij) - 1. / (Uij * Uij)) + (1. / (2. * dis)) * log(Lij / Uij));
-            }
-            if(isnan(intb)) {
-                std::cout << i << " " << j << std::endl;
-                std::cout << P.complex.noH[i].born_scale << std::endl;
-                std::cout << P.complex.noH[i].radius << std::endl;
-                std::cout << P.complex.noH[j].born_scale << std::endl;
-                std::cout << P.complex.noH[j].radius << std::endl;
-                if(i < j) {
-                    std::cout << P.complex_dis_mat(i,j) << std::endl;
-                } else {
-                    std::cout << P.complex_dis_mat(j,i) << std::endl;
+                if(isnan(intb)) {
+                    std::cout << i << " " << j << std::endl;
+                    std::cout << P.complex.noH[i].born_scale << std::endl;
+                    std::cout << P.complex.noH[i].radius << std::endl;
+                    std::cout << P.complex.noH[j].born_scale << std::endl;
+                    std::cout << P.complex.noH[j].radius << std::endl;
+                    if(i < j) {
+                        std::cout << P.complex_dis_mat(i,j) << std::endl;
+                    } else {
+                        std::cout << P.complex_dis_mat(j,i) << std::endl;
+                    }
+                    std::cout << Lij << std::endl;
+                    std::cout << Uij << std::endl;
+                    assert(false);
                 }
-                std::cout << Lij << std::endl;
-                std::cout << Uij << std::endl;
-                assert(false);
             }
+            if(i < P.rna_heavy_size) {
+                P.complex_born_radius_table[i] = 1. / (1. / radi - intb - P.rna_fixed_born_part_table[i]);
+            } else {
+                P.complex_born_radius_table[i] = 1. / (1. / radi - intb);
+            }
+            //  printf("%d %lf %lf\n",i,rb0_complex[i],rrr_complex[i]);
         }
-        if(i < P.rna_heavy_size) {
-            P.complex_born_radius_table[i] = 1. / (1. / radi - intb - P.rna_fixed_born_part_table[i]);
-        } else {
-            P.complex_born_radius_table[i] = 1. / (1. / radi - intb);
-        }
-        //  printf("%d %lf %lf\n",i,rb0_complex[i],rrr_complex[i]);
-    }
+    // }
     // P.rna_after_born_radius_table = vector<double>(P.rna_heavy_size,0.0);
     // P.lig_after_born_radius_table = vector<double>(P.lig_heavy_size,0.0);
     // for (int i = 0; i < P.complex_heavy_size; i++)
@@ -1029,7 +1041,7 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
         const int atom_y_grid = static_cast<int>(lig_y/P.lj_grids.width);
         const int atom_z_grid = static_cast<int>(lig_z/P.lj_grids.width);
 
-        const tmd::Grid& grid = P.lj_grids(atom_x_grid,atom_y_grid,atom_z_grid);
+        const tmd::Grid& grid = P.lj_grids.at(atom_x_grid,atom_y_grid,atom_z_grid);
         if(grid.flag) {
             for(const int& r_j : grid.rigid_atoms) {
                 // const double& rna_x = P.rna.noH[r_j].x;
@@ -1065,19 +1077,24 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
     //     }
     // }
 
+
     // P.ligand_ELEenergy = 0.0;
     P.ligand_LJenergy = 0.0;
     P.ligand_POLenergy = 0.0;
     P.ligand_SELFenergy = 0.0;
     for (int i = 0; i < P.lig_heavy_size; i++)
     {
-        P.ligand_SELFenergy = P.ligand_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.lig.noH[i].charge * P.lig.noH[i].charge * (1. / P.complex_born_radius_table[i+P.rna_heavy_size] - 1. / P.lig_born_radius_table[i]);
+        // if(this->RL_Score_Mode == RL_ALL) {
+            P.ligand_SELFenergy = P.ligand_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.lig.noH[i].charge * P.lig.noH[i].charge * (1. / P.complex_born_radius_table[i+P.rna_heavy_size] - 1. / P.lig_born_radius_table[i]);
+        // }
         for (int j = 0; j < P.lig_heavy_size; j++)
         {
             if(i < j) {
                 const double& cal_dis = P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
                 const double& cal_dis_square = P.complex_dis_square_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
-                P.ligand_POLenergy = P.ligand_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.lig.noH[i].charge * P.lig.noH[j].charge / sqrt(cal_dis_square + P.lig_born_radius_table[i] * P.lig_born_radius_table[j] * exp(-cal_dis_square / (4. * P.lig_born_radius_table[i] * P.lig_born_radius_table[j])));
+                // if(this->RL_Score_Mode == RL_ALL) {
+                    P.ligand_POLenergy = P.ligand_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.lig.noH[i].charge * P.lig.noH[j].charge / sqrt(cal_dis_square + P.lig_born_radius_table[i] * P.lig_born_radius_table[j] * exp(-cal_dis_square / (4. * P.lig_born_radius_table[i] * P.lig_born_radius_table[j])));
+                // }
 
                 if(P.bond_type_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) == tmd::DUMMY_BOND) {
                     continue;
@@ -1096,132 +1113,189 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
         }
     }
 
-    P.RNA_SELFenergy = 0.0;
-    P.ELEenergy = 0.0;
-    P.HBenergy = 0.0;
-    for (int iatom_RNA = 0; iatom_RNA < P.rna_heavy_size; iatom_RNA++)
-    {
-        P.RNA_SELFenergy = P.RNA_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.rna.noH[iatom_RNA].charge * P.rna.noH[iatom_RNA].charge * (1. / P.complex_born_radius_table[iatom_RNA] - 1. / P.rna_born_radius_table[iatom_RNA]);
-        for (int i = 0; i < P.lig_heavy_size; i++)
+    // if(this->RL_Score_Mode == RL_ALL) {
+        P.RNA_SELFenergy = 0.0;
+        P.ELEenergy = 0.0;
+        P.HBenergy = 0.0;
+        for (int iatom_RNA = 0; iatom_RNA < P.rna_heavy_size; iatom_RNA++)
         {
-            P.ELEenergy = P.ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.rna.noH[iatom_RNA].charge / P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size);
-            // POLenergy = POLenergy + lB0 * (1. / e2 - 1. / e1) * charge_ligand[i] * charge_RNA[iatom_RNA] / sqrt(dis_ok[i][iatom_RNA] * dis_ok[i][iatom_RNA] + Rborn[isite][atomtype_ligand[i]] * rb0[iatom_RNA] * exp(-dis_ok[i][iatom_RNA] * dis_ok[i][iatom_RNA] / (4. * Rborn[isite][atomtype_ligand[i]] * rb0[iatom_RNA])));
-            // double equ_dis = P.radius_with_water[P.lig.noH[i].type_idx] + P.radius_with_water[P.rna.noH[iatom_RNA].type_idx];
-            // if (dis_ok[i][iatom_RNA] < equ_dis)
-            // {
-            //     iLJ_dis = (dis_ok[i][iatom_RNA] / (equ_dis)) * LJstep + 1;
-            //     SASAenergy = SASAenergy + SASA[atomtype_RNA[iatom_RNA]][atomtype_ligand[i]][iLJ_dis];
-            // }
-            if (P.lig.noH[i].numH > 0 || P.rna.noH[iatom_RNA].numH > 0)
+            P.RNA_SELFenergy = P.RNA_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.rna.noH[iatom_RNA].charge * P.rna.noH[iatom_RNA].charge * (1. / P.complex_born_radius_table[iatom_RNA] - 1. / P.rna_born_radius_table[iatom_RNA]);
+            for (int i = 0; i < P.lig_heavy_size; i++)
             {
-                const double& equ_dis = P.Hbond_max * (P.radius_type[P.lig.noH[i].type_idx] + P.radius_type[P.rna.noH[iatom_RNA].type_idx]);
-                if (P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) < equ_dis)
+                P.ELEenergy = P.ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.rna.noH[iatom_RNA].charge / P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size);
+
+
+                ///////////////////////////////////////////////////////////////////////
+                // if(P.ELEenergy < -400) {
+                //     std::cout << P.ELEenergy << " " << iatom_RNA << " " << i << " " << P.lig.noH[i].charge << " " << P.rna.noH[iatom_RNA].charge << " " << P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) << std::endl;
+                //     yz_lig.write(std::cout);
+
+                //     const double& dis = P.complex_dis_mat(iatom_RNA, i+P.rna_heavy_size);
+                //     const double equ_dis = (P.rna.noH[iatom_RNA].radius + P.lig.noH[i].radius);
+                //     if (dis < P.LJ_cut * equ_dis) {
+                //         const int iLJ_dis = (dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
+                //         // P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
+                //         std::cout << dis << " " << equ_dis << " " << iLJ_dis << " " << P.rna.noH[iatom_RNA].type_idx << " " << P.lig.noH[i].type_idx << " " << P.LJ_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis] << std::endl;
+                //     }
+                //     std::cout << P.LJenergy << std::endl;
+
+                //     const double& lig_x = P.lig.noH[i].x;
+                //     const double& lig_y = P.lig.noH[i].y;
+                //     const double& lig_z = P.lig.noH[i].z;
+                //     std::cout << "atomtype: " << P.lig.noH[i].name << " " << P.lig.noH[i].yz_atom_index << " lig coord: " << lig_x << " " << lig_y << " " << lig_z << std::endl;
+                //     const int atom_x_grid = static_cast<int>(lig_x/P.lj_grids.width);
+                //     const int atom_y_grid = static_cast<int>(lig_y/P.lj_grids.width);
+                //     const int atom_z_grid = static_cast<int>(lig_z/P.lj_grids.width);
+
+                //     const tmd::Grid& grid = P.lj_grids.at(atom_x_grid,atom_y_grid,atom_z_grid);
+                //     std::cout << "lj grids: " << P.lj_grids.dim_1() << " " << P.lj_grids.dim_2() << " " << P.lj_grids.dim_3() << " " << P.lj_grids.width << " " << P.lj_grids.min_i << " " << P.lj_grids.min_j << " " << P.lj_grids.min_k << " " << std::endl;
+                //     std::cout << grid.flag << std::endl;
+                //     if(grid.flag) {
+                //         std::cout << "rigid atoms size: " << grid.rigid_atoms.size() << std::endl;
+                //         for(const int& r_j : grid.rigid_atoms) {
+                //             const double& rna_x = P.rna.noH[r_j].x;
+                //             const double& rna_y = P.rna.noH[r_j].y;
+                //             const double& rna_z = P.rna.noH[r_j].z;
+                //             std::cout << r_j << std::endl;
+                //             std::cout << "rna atomtype: " << P.rna.noH[r_j].name << " " << P.rna.noH[r_j].yz_atom_index << " rna coord: " << rna_x << " " << rna_y << " " << rna_z << std::endl;
+                //             // // const double& dis = sqrt((rna_x-lig_x)*(rna_x-lig_x)+(rna_y-lig_y)*(rna_y-lig_y)+(rna_z-lig_z)*(rna_z-lig_z));
+                //             // const double& dis = P.complex_dis_mat(r_j, i+P.rna_heavy_size);
+                //             // const double equ_dis = (P.rna.noH[r_j].radius + P.lig.noH[i].radius);
+                //             // if (dis < P.LJ_cut * equ_dis) {
+                //             //     const int iLJ_dis = (dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
+                //             //     P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[r_j].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
+                //             // }
+                //         }
+                //     }
+
+
+                //     assert(false);
+                // }
+                ////////////////////////////////////////////////////////////////////////
+                // POLenergy = POLenergy + lB0 * (1. / e2 - 1. / e1) * charge_ligand[i] * charge_RNA[iatom_RNA] / sqrt(dis_ok[i][iatom_RNA] * dis_ok[i][iatom_RNA] + Rborn[isite][atomtype_ligand[i]] * rb0[iatom_RNA] * exp(-dis_ok[i][iatom_RNA] * dis_ok[i][iatom_RNA] / (4. * Rborn[isite][atomtype_ligand[i]] * rb0[iatom_RNA])));
+                // double equ_dis = P.radius_with_water[P.lig.noH[i].type_idx] + P.radius_with_water[P.rna.noH[iatom_RNA].type_idx];
+                // if (dis_ok[i][iatom_RNA] < equ_dis)
+                // {
+                //     iLJ_dis = (dis_ok[i][iatom_RNA] / (equ_dis)) * LJstep + 1;
+                //     SASAenergy = SASAenergy + SASA[atomtype_RNA[iatom_RNA]][atomtype_ligand[i]][iLJ_dis];
+                // }
+                if (P.lig.noH[i].numH > 0 || P.rna.noH[iatom_RNA].numH > 0)
                 {
-                    const int& iLJ_dis = (P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) / (equ_dis)) * P.LJstep + 1;
-                    P.HBenergy = P.HBenergy - P.Hbond_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
-                }
-            }
-        }
-    }
-
-    //complex pol
-    P.complex_POLenergy = 0.0;
-    for (int i = 0; i < P.complex_heavy_size; i++)
-    {
-        for (int j = 0; j < P.complex_heavy_size; j++)
-        {
-            if (i < j)
-            {
-                const double& dis = P.complex_dis_mat(i,j);
-                const double& dis_square = P.complex_dis_square_mat(i,j);
-                P.complex_POLenergy = P.complex_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.complex.noH[i].charge * P.complex.noH[j].charge / sqrt(dis_square + P.complex_born_radius_table[i] * P.complex_born_radius_table[j] * exp(-dis_square / (4. * P.complex_born_radius_table[i] * P.complex_born_radius_table[j])));
-            }
-        }
-    }
-    P.POLenergy = P.complex_POLenergy - P.ligand_POLenergy - P.RNA_POLenergy;
-
-
-    //cal the change in sasa after sample a new pose
-    // std::cout << "start SASA_After" << std::endl;
-    // SASA_After(P, P.complex, P.rna, P.lig);
-    // P.SumSASA_complex = SumSASAtmp;
-    // P.SASAenergy = P.gamma_SASA * (P.SumSASA_RNA + P.SumSASA_ligand) / P.rate_kcal_to_kt;
-
-    P.sasa = 0.0;
-    // std::cout << "cal SASA" << std::endl;
-    std::map<int,std::vector<int>> sasa_rna_near_atom_map;
-    for(int i = 0; i < P.lig_heavy_size; i++) {
-        const double& lig_x = P.lig.noH[i].x;
-        const double& lig_y = P.lig.noH[i].y;
-        const double& lig_z = P.lig.noH[i].z;
-        const int& atom_x_grid = static_cast<int>(lig_x/P.sasa_grids.width);
-        const int& atom_y_grid = static_cast<int>(lig_y/P.sasa_grids.width);
-        const int& atom_z_grid = static_cast<int>(lig_z/P.sasa_grids.width);
-        const double& r1 = P.lig.noH[i].radius + P.radius_water;
-        const double& r1_square = r1*r1;
-
-        const tmd::Grid& grid = P.sasa_grids(atom_x_grid,atom_y_grid,atom_z_grid);
-        if(grid.flag) {
-            std::vector<int> sasa_rna_atom_indices;
-            for(const int& r_j : grid.rigid_atoms) {
-                // const double& rna_x = P.rna.noH[r_j].x;
-                // const double& rna_y = P.rna.noH[r_j].y;
-                // const double& rna_z = P.rna.noH[r_j].z;
-                // const double& r2 = P.rna.noH[r_j].radius + P.radius_water;
-                // const double& dis = sqrt((rna_x-lig_x)*(rna_x-lig_x)+(rna_y-lig_y)*(rna_y-lig_y)+(rna_z-lig_z)*(rna_z-lig_z));
-                const double& dis = P.complex_dis_mat(r_j,i+P.rna_heavy_size);
-                if (dis < (P.rna.noH[r_j].radius + P.lig.noH[i].radius + 2.0 * P.radius_water)) {
-                    sasa_rna_atom_indices.push_back(r_j);
-                    if(sasa_rna_near_atom_map.find(r_j)!=sasa_rna_near_atom_map.end()) {
-                        sasa_rna_near_atom_map[r_j].push_back(i);
-                    } else {
-                        sasa_rna_near_atom_map.insert({r_j,{i}});
+                    const double& equ_dis = P.Hbond_max * (P.radius_type[P.lig.noH[i].type_idx] + P.radius_type[P.rna.noH[iatom_RNA].type_idx]);
+                    if (P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) < equ_dis)
+                    {
+                        const int& iLJ_dis = (P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) / (equ_dis)) * P.LJstep + 1;
+                        P.HBenergy = P.HBenergy - P.Hbond_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
                     }
                 }
             }
-            for(const sasa_polar& sap : P.sasa_polar_table[P.lig.noH[i].type_idx]) {
-                const double& Rx = sap.Rx + lig_x;
-                const double& Ry = sap.Ry + lig_y;
-                const double& Rz = sap.Rz + lig_z;
-                for(const int& r_j : sasa_rna_atom_indices) {
-                    const double& rna_x = P.rna.noH[r_j].x;
-                    const double& rna_y = P.rna.noH[r_j].y;
-                    const double& rna_z = P.rna.noH[r_j].z;
-                    const double& r2 = P.rna.noH[r_j].radius + P.radius_water;
-                    if ( (Rx-rna_x)*(Rx-rna_x)+(Ry-rna_y)*(Ry-rna_y)+(Rz-rna_z)*(Rz-rna_z) <= r2*r2 ) {
-                        P.sasa += r1_square * sap.sin_sita * sap.dsita * sap.dphi;
+        }
+
+        //complex pol
+        P.complex_POLenergy = 0.0;
+        for (int i = 0; i < P.complex_heavy_size; i++)
+        {
+            for (int j = 0; j < P.complex_heavy_size; j++)
+            {
+                if (i < j)
+                {
+                    const double& dis = P.complex_dis_mat(i,j);
+                    const double& dis_square = P.complex_dis_square_mat(i,j);
+                    P.complex_POLenergy = P.complex_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.complex.noH[i].charge * P.complex.noH[j].charge / sqrt(dis_square + P.complex_born_radius_table[i] * P.complex_born_radius_table[j] * exp(-dis_square / (4. * P.complex_born_radius_table[i] * P.complex_born_radius_table[j])));
+
+                    // if(std::isnan(P.complex_POLenergy)) {
+                    //     std::cout << "complex polenergy is nan" << std::endl;
+                    //     std::cout << dis_square << " " << P.rna_heavy_size << " " << i << " " << j << " " << P.complex_born_radius_table[i] << " " << P.complex_born_radius_table[j] << std::endl;
+                    //     assert(false);
+                    // }
+                }
+            }
+        }
+        P.POLenergy = P.complex_POLenergy - P.ligand_POLenergy - P.RNA_POLenergy;
+
+
+        //cal the change in sasa after sample a new pose
+        // std::cout << "start SASA_After" << std::endl;
+        // SASA_After(P, P.complex, P.rna, P.lig);
+        // P.SumSASA_complex = SumSASAtmp;
+        // P.SASAenergy = P.gamma_SASA * (P.SumSASA_RNA + P.SumSASA_ligand) / P.rate_kcal_to_kt;
+
+        P.sasa = 0.0;
+        // std::cout << "cal SASA" << std::endl;
+        std::map<int,std::vector<int>> sasa_rna_near_atom_map;
+        for(int i = 0; i < P.lig_heavy_size; i++) {
+            const double& lig_x = P.lig.noH[i].x;
+            const double& lig_y = P.lig.noH[i].y;
+            const double& lig_z = P.lig.noH[i].z;
+            const int& atom_x_grid = static_cast<int>(lig_x/P.sasa_grids.width);
+            const int& atom_y_grid = static_cast<int>(lig_y/P.sasa_grids.width);
+            const int& atom_z_grid = static_cast<int>(lig_z/P.sasa_grids.width);
+            const double& r1 = P.lig.noH[i].radius + P.radius_water;
+            const double& r1_square = r1*r1;
+
+            const tmd::Grid& grid = P.sasa_grids.at(atom_x_grid,atom_y_grid,atom_z_grid);
+            if(grid.flag) {
+                std::vector<int> sasa_rna_atom_indices;
+                for(const int& r_j : grid.rigid_atoms) {
+                    // const double& rna_x = P.rna.noH[r_j].x;
+                    // const double& rna_y = P.rna.noH[r_j].y;
+                    // const double& rna_z = P.rna.noH[r_j].z;
+                    // const double& r2 = P.rna.noH[r_j].radius + P.radius_water;
+                    // const double& dis = sqrt((rna_x-lig_x)*(rna_x-lig_x)+(rna_y-lig_y)*(rna_y-lig_y)+(rna_z-lig_z)*(rna_z-lig_z));
+                    const double& dis = P.complex_dis_mat(r_j,i+P.rna_heavy_size);
+                    if (dis < (P.rna.noH[r_j].radius + P.lig.noH[i].radius + 2.0 * P.radius_water)) {
+                        sasa_rna_atom_indices.push_back(r_j);
+                        if(sasa_rna_near_atom_map.find(r_j)!=sasa_rna_near_atom_map.end()) {
+                            sasa_rna_near_atom_map[r_j].push_back(i);
+                        } else {
+                            sasa_rna_near_atom_map.insert({r_j,{i}});
+                        }
+                    }
+                }
+                for(const sasa_polar& sap : P.sasa_polar_table[P.lig.noH[i].type_idx]) {
+                    const double& Rx = sap.Rx + lig_x;
+                    const double& Ry = sap.Ry + lig_y;
+                    const double& Rz = sap.Rz + lig_z;
+                    for(const int& r_j : sasa_rna_atom_indices) {
+                        const double& rna_x = P.rna.noH[r_j].x;
+                        const double& rna_y = P.rna.noH[r_j].y;
+                        const double& rna_z = P.rna.noH[r_j].z;
+                        const double& r2 = P.rna.noH[r_j].radius + P.radius_water;
+                        if ( (Rx-rna_x)*(Rx-rna_x)+(Ry-rna_y)*(Ry-rna_y)+(Rz-rna_z)*(Rz-rna_z) <= r2*r2 ) {
+                            P.sasa += r1_square * sap.sin_sita * sap.dsita * sap.dphi;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        for(const auto& rna_near : sasa_rna_near_atom_map) {
+            const int& ri = rna_near.first;
+            const double& rna_x = P.rna.noH[ri].x;
+            const double& rna_y = P.rna.noH[ri].y;
+            const double& rna_z = P.rna.noH[ri].z;
+            const double& r2 = P.rna.noH[ri].radius + P.radius_water;
+            const double& r2_square = r2*r2;
+
+            for(const sasa_polar& sap : P.sasa_polar_table[P.rna.noH[ri].type_idx]) {
+                const double& Rx = sap.Rx + rna_x;
+                const double& Ry = sap.Ry + rna_y;
+                const double& Rz = sap.Rz + rna_z;
+                for(const int& lj : rna_near.second) {
+                    const double& lig_x = P.lig.noH[lj].x;
+                    const double& lig_y = P.lig.noH[lj].y;
+                    const double& lig_z = P.lig.noH[lj].z;
+                    const double& r1 = P.lig.noH[lj].radius + P.radius_water;
+                    if ( (Rx-lig_x)*(Rx-lig_x)+(Ry-lig_y)*(Ry-lig_y)+(Rz-lig_z)*(Rz-lig_z) <= r1*r1 ) {
+                        P.sasa += r2_square * sap.sin_sita * sap.dsita * sap.dphi;
                         break;
                     }
                 }
             }
         }
-    }
-    for(const auto& rna_near : sasa_rna_near_atom_map) {
-        const int& ri = rna_near.first;
-        const double& rna_x = P.rna.noH[ri].x;
-        const double& rna_y = P.rna.noH[ri].y;
-        const double& rna_z = P.rna.noH[ri].z;
-        const double& r2 = P.rna.noH[ri].radius + P.radius_water;
-        const double& r2_square = r2*r2;
-
-        for(const sasa_polar& sap : P.sasa_polar_table[P.rna.noH[ri].type_idx]) {
-            const double& Rx = sap.Rx + rna_x;
-            const double& Ry = sap.Ry + rna_y;
-            const double& Rz = sap.Rz + rna_z;
-            for(const int& lj : rna_near.second) {
-                const double& lig_x = P.lig.noH[lj].x;
-                const double& lig_y = P.lig.noH[lj].y;
-                const double& lig_z = P.lig.noH[lj].z;
-                const double& r1 = P.lig.noH[lj].radius + P.radius_water;
-                if ( (Rx-lig_x)*(Rx-lig_x)+(Ry-lig_y)*(Ry-lig_y)+(Rz-lig_z)*(Rz-lig_z) <= r1*r1 ) {
-                    P.sasa += r2_square * sap.sin_sita * sap.dsita * sap.dphi;
-                    break;
-                }
-            }
-        }
-    }
-    // std::cout << "sasa: " <<  P.gamma_SASA * P.sasa / P.rate_kcal_to_kt << std::endl;
-    P.SASAenergy = P.gamma_SASA * P.sasa / P.rate_kcal_to_kt;
+        // std::cout << "sasa: " <<  P.gamma_SASA * P.sasa / P.rate_kcal_to_kt << std::endl;
+        P.SASAenergy = P.gamma_SASA * P.sasa / P.rate_kcal_to_kt;
+    // }
 
     ////////////////////////////////////////////////////////////
     // std::cout << "cal whole energy" << std::endl;
@@ -1236,24 +1310,61 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
             // +P.ligand_ELEenergy
             +P.ligand_LJenergy;
 
-    // std::cout << "LJenergy: " << P.LJenergy << std::endl;
-    // std::cout << "ELEenergy: " << P.ELEenergy << std::endl;
-    // std::cout << "POLenergy: " << P.POLenergy << std::endl;
-    // std::cout << "ligand_SELFenergy: " << P.ligand_SELFenergy << std::endl;
-    // std::cout << "SASAenergy: " << P.SASAenergy << std::endl;
-    // std::cout << "HBenergy: " << P.HBenergy << std::endl;
-    // std::cout << "RNA_SELFenergy: " << P.RNA_SELFenergy << std::endl;
-    // std::cout << "ligand_LJenergy: " << P.ligand_LJenergy << std::endl;
-    // std::cout << "ligand_ELEenergy: " << P.ligand_ELEenergy << std::endl;
-    // P.print_lig_born_radius_table();
-    // P.print_rna_born_radius_table();
-    // P.print_lig_after_born_radius_table();
-    // P.print_rna_after_born_radius_table();
-    // P.print_complex_born_radius_table();
-    // std::cout << "----------------------------------------------" << std::endl;
-    // exit(2);
+    // if(energy < 23.18 && yz_lig.rmsd_with_respect_to_ref_atoms() < 20) {
+    //     std::cout << "score mode: " << this->RL_Score_Mode << std::endl;
+    //     yz_lig.write(std::cout);
+    //     std::cout << "LJenergy: " << P.LJenergy << std::endl;
+    //     std::cout << "ELEenergy: " << P.ELEenergy << std::endl;
+    //     std::cout << "POLenergy: " << P.POLenergy  << " --> complex: " << P.complex_POLenergy << " rna: " << P.RNA_POLenergy << " lig: " << P.ligand_POLenergy << std::endl;
+    //     std::cout << "ligand_SELFenergy: " << P.ligand_SELFenergy << std::endl;
+    //     std::cout << "SASAenergy: " << P.SASAenergy << std::endl;
+    //     std::cout << "HBenergy: " << P.HBenergy << std::endl;
+    //     std::cout << "RNA_SELFenergy: " << P.RNA_SELFenergy << std::endl;
+    //     std::cout << "ligand_LJenergy: " << P.ligand_LJenergy << std::endl;
+    //     // std::cout << "ligand_ELEenergy: " << P.ligand_ELEenergy << std::endl;
+    //     std::cout << "total energy: " << energy << std::endl;
+    //     // P.print_lig_born_radius_table();
+    //     // P.print_rna_born_radius_table();
+    //     // P.print_lig_after_born_radius_table();
+    //     // P.print_rna_after_born_radius_table();
+    //     // P.print_complex_born_radius_table();
+    //     std::cout << "----------------------------------------------" << std::endl;
+    //     // if(energy<-1000) {
+    //     //     exit(2);
+    //     // }
+    //     for(int i = 0; i < P.lig_heavy_size; ++i) {
+    //         std::cout << P.lig.noH[i].index << " " << P.lig.noH[i].name << " " << P.lig.noH[i].x << " " << P.lig.noH[i].y << " " << P.lig.noH[i].z << " " << P.lig.noH[i].charge << " " << P.lig_born_radius_table[i] << " " << P.lig.noH[i].radius << " " << P.lig.noH[i].born_scale << std::endl;
+    //     }
+    //     for(int i = P.rna_heavy_size; i < P.complex.noH.size(); ++i) {
+    //         std::cout << P.complex.noH[i].index << " " << P.complex.noH[i].name << " " << P.complex.noH[i].x << " " << P.complex.noH[i].y << " " << P.complex.noH[i].z << " " << P.complex.noH[i].charge << " " << P.complex_born_radius_table[i] << " " << P.complex.noH[i].radius << " " << P.complex.noH[i].born_scale << std::endl;
+    //     }
+    //     for(int i = 0; i < P.rna_heavy_size; ++i) {
+    //         std::cout << P.rna.noH[i].index << " " << P.rna.noH[i].name << " " << P.rna.noH[i].x << " " << P.rna.noH[i].y << " " << P.rna.noH[i].z << " " << P.rna.noH[i].charge << " " << P.rna_born_radius_table[i] << " " << P.rna.noH[i].radius << " " << P.rna.noH[i].born_scale << std::endl;
+    //     }
+    //     for(int i = 0; i < P.rna_heavy_size; ++i) {
+    //         std::cout << P.complex.noH[i].index << " " << P.complex.noH[i].name << " " << P.complex.noH[i].x << " " << P.complex.noH[i].y << " " << P.complex.noH[i].z << " " << P.complex.noH[i].charge << " " << P.complex_born_radius_table[i] << " " << P.complex.noH[i].radius << " " << P.complex.noH[i].born_scale << std::endl;
+    //     }
 
-    return energy;
+    //     for (int i = 0; i < P.rna_heavy_size; i++)
+    //     {
+    //         for (int j = P.rna_heavy_size; j < P.complex_heavy_size; j++)
+    //         {
+    //             if (i < j)
+    //             {
+    //                 const double& dis_square =
+    //                     (P.complex.noH[j].x - P.complex.noH[i].x) * (P.complex.noH[j].x - P.complex.noH[i].x) +
+    //                     (P.complex.noH[j].y - P.complex.noH[i].y) * (P.complex.noH[j].y - P.complex.noH[i].y) +
+    //                     (P.complex.noH[j].z - P.complex.noH[i].z) * (P.complex.noH[j].z - P.complex.noH[i].z);
+    //                 if(sqrt(dis_square) < 5) {
+    //                     std::cout << i << " " << j << " " << sqrt(dis_square) << " " << P.complex_dis_mat(i,j) << " " << dis_square << " " << P.complex_dis_square_mat(i,j) << std::endl;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     exit(2);
+    // }
+
+    return energy/static_cast<double>(P.lig_heavy_size);
 
 }
 

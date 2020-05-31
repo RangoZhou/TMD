@@ -8,133 +8,21 @@
 
 namespace tmd {
 
-class Atom;//forward declaration
-
-// using Ref_Atom = std::reference_wrapper<Atom>;
-// using Atom_Index = std::vector<Atom>::size_type;
-using Atoms = std::vector<Atom>;
-// using Ref_Atoms = std::vector<Atom>;
-// using Input_Atoms std::vector<Atom>;
-struct Context;//forward declaration
-// using Context_Index = std::vector<Context>::size_type;
-using Contexts = std::vector<Context>;
-
-
-enum ATOM_TYPE {SYBYL,AD4,SYBYL_AD4,AD4_SYBYL};
-
-enum BOND_TYPE {SINGLE_BOND,DOUBLE_BOND,TRIPLE_BOND,AMIDE_BOND,AROMATIC_BOND,DUMMY_BOND,UNKNOWN_BOND,NOT_CONNECTED_BOND,NONE_BOND};
-class Bond {
-    int bond_atom_index;
-    BOND_TYPE Bond_Type;
+class Atom_Type {
+    ELEMENT_TYPE el_type = EL_Unk;
+    AD4_TYPE ad4_type = AD4_Unk;
+    SYBYL_TYPE sybyl_type = SYBYL_Unk;
 public:
-    // Bond() : to_index(-1) {}
-    Bond(const int ai, const BOND_TYPE bt) : bond_atom_index(ai), Bond_Type(bt) {}
-    const int get_bonded_atom_index() const {
-        return this->bond_atom_index;
-    }
-    const BOND_TYPE get_bond_type() const {
-        return this->Bond_Type;
-    }
-};
-using Bonds = std::vector<Bond>;
-// using Bond_Index = Bonds::size_type;
-
-class Atom {
-    ELEMENT_TYPE el_type = EL_UNK;
-    AD4_TYPE ad4_type = AD4_UNK;
-    SYBYL_TYPE sybyl_type = SYBYL_UNK;
-    Vec3d coord;
-    Bonds bonds;
-    int serial;
-    std::string name = "";
-    std::string res_name = "";
-    std::string chain_name = "";
-    int res_serial;
-    int context_index;
-    Float charge = 0.0;
-    // Float occupancy = 0.0;
-    // Float temp_factor = 0.0;
-    // int model_serial = 1;
-public:
-    friend void print(const Atom& a, std::ostream& out);
-    //constructors
-    // Atom() {}
-    explicit Atom(const std::string s, const ATOM_TYPE at) {
-        switch(at) {
-            case SYBYL:
-                this->sybyl_type = (sybyl_type_lookup.find(s)==sybyl_type_lookup.end()) ? SYBYL_UNK : sybyl_type_lookup.at(s);//string_to_sybyl_type
-                this->el_type = sybyl_infos.at(this->sybyl_type).EL_TYPE;//sybyl_type_to_element_type
-                break;
-            case AD4:
-                this->ad4_type = (ad4_type_lookup.find(s)==ad4_type_lookup.end()) ? AD4_UNK : ad4_type_lookup.at(s);//string_to_ad4_type
-                this->el_type = ad4_infos.at(this->ad4_type).EL_TYPE;//ad4_type_to_element_type
-                break;
-            default:
-                assert(false);
-                break;
-        }
-    }
-    explicit Atom(const std::string s1, const std::string s2, const ATOM_TYPE at) {
-        switch(at) {
-            case AD4_SYBYL:
-                this->ad4_type = (ad4_type_lookup.find(s1)==ad4_type_lookup.end()) ? AD4_UNK : ad4_type_lookup.at(s1);//string_to_ad4_type
-                this->el_type = ad4_infos.at(this->ad4_type).EL_TYPE;//ad4_type_to_element_type
-                this->sybyl_type = (sybyl_type_lookup.find(s2)==sybyl_type_lookup.end()) ? SYBYL_UNK : sybyl_type_lookup.at(s2);//string_to_sybyl_type
-                assert(this->el_type == sybyl_infos.at(this->sybyl_type).EL_TYPE);//sybyl_type_to_element_type
-                break;
-            case SYBYL_AD4:
-                this->sybyl_type = (sybyl_type_lookup.find(s1)==sybyl_type_lookup.end()) ? SYBYL_UNK : sybyl_type_lookup.at(s1);//string_to_sybyl_type
-                this->el_type = sybyl_infos.at(this->sybyl_type).EL_TYPE;//sybyl_type_to_element_type
-                this->ad4_type = (ad4_type_lookup.find(s2)==ad4_type_lookup.end()) ? AD4_UNK : ad4_type_lookup.at(s2);//string_to_ad4_type
-                assert(this->el_type == ad4_infos.at(this->ad4_type).EL_TYPE);//ad4_type_to_element_type
-                break;
-            default:
-                assert(false);
-                break;
-        }
-    }
-    // Atom(const SYBYL_TYPE st) : sybyl_type(st) {
-    //     this->el_type = sybyl_infos.at(this->sybyl_type).EL_TYPE;//sybyl_type_to_element_type
+    // explicit Atom_Type(const AD4_TYPE& at, const SYBYL_TYPE& st) : ad4_type(at), sybyl_type(st) {
+    //     this->el_type = ad4_infos.at(this->ad4_type).element_type;//ad4_type_to_element_type
+    //     assert(this->sybyl_type != SYBYL_Unk && this->ad4_type != AD4_Unk);
+    //     assert(this->el_type == sybyl_infos.at(this->sybyl_type).element_type);//sybyl_type_to_element_type
     // }
 
-    //Atom constants
-    // element parameter
-    const Float& get_element_covalent_radius() const {
-        return element_infos.at(this->el_type).covalent_radius;
-    }
-    // const Float get_atomic_radius() const;
-    const Float& get_element_vdw_radius() const {
-        return element_infos.at(this->el_type).vdw_radius;
-    }
-    const std::string& get_element_type_name() const {
-        return element_infos.at(this->el_type).name;
-    }
+    // explicit Atom_Type(const SYBYL_TYPE& st) : sybyl_type(st) {
+    //     this->el_type = sybyl_infos.at(this->sybyl_type).element_type;
+    // }
 
-    // sybyl atom parameter
-    const Float& get_sybyl_covalent_radius() const {
-        return sybyl_infos.at(this->sybyl_type).covalent_radius;
-    }
-    // const Float get_atomic_radius() const;
-    const Float& get_sybyl_vdw_radius() const {
-        return sybyl_infos.at(this->sybyl_type).vdw_radius;
-    }
-    const Float& get_sybyl_well_depth() const {
-        return sybyl_infos.at(this->sybyl_type).well_depth;
-    }
-    const Float& get_sybyl_vdw_volume() const {
-        return sybyl_infos.at(this->sybyl_type).vdw_volume;
-    }
-    const Float& get_sybyl_solvation() const {
-        return sybyl_infos.at(this->sybyl_type).solvation;
-    }
-    const std::string& get_sybyl_type_name() const {
-        return sybyl_infos.at(this->sybyl_type).name;
-    }
-
-    //Atom class properties
-    void set_charge(const Float& c) {
-        this->charge = c;
-    }
     void set_element_type(const ELEMENT_TYPE& et) {
         this->el_type = et;
     }
@@ -144,9 +32,191 @@ public:
     void set_ad4_type(const AD4_TYPE& at) {
         this->ad4_type = at;
     }
+    //Atom constants
+    // element parameter
+    const Float& get_covalent_radius() const {
+        return element_infos.at(this->el_type).covalent_radius;
+    }
+    const Float& get_atomic_radius() const {
+        return element_infos.at(this->el_type).atomic_radius;
+    }
+    const Float& get_vdw_radius() const {
+        return element_infos.at(this->el_type).vdw_radius;
+    }
+    const int& get_atomic_number() const {
+        return element_infos.at(this->el_type).atomic_number;
+    }
+    const std::string& get_element_type_name() const {
+        return element_infos.at(this->el_type).name;
+    }
+    const std::string& get_sybyl_type_name() const {
+        return sybyl_infos.at(this->sybyl_type).sybyl_name;
+    }
+    const std::string& get_ad4_type_name() const {
+        return ad4_infos.at(this->ad4_type).ad4_name;
+    }
+    const ELEMENT_TYPE& get_element_type() const {
+        return this->el_type;
+    }
+    const SYBYL_TYPE& get_sybyl_type() const {
+        return this->sybyl_type;
+    }
+    const AD4_TYPE& get_ad4_type() const {
+        return this->ad4_type;
+    }
+
+    //Atom chemical physical properties
+    const bool is_metal() const {
+        switch(this->el_type) {
+            case EL_Ac:
+            case EL_Ag:
+            case EL_Al:
+            case EL_Am:
+            case EL_Au:
+            case EL_Ba:
+            case EL_Be:
+            case EL_Bi:
+            case EL_Bk:
+            case EL_Ca:
+            case EL_Cd:
+            case EL_Ce:
+            case EL_Cf:
+            case EL_Cm:
+            case EL_Co:
+            case EL_Cr:
+            case EL_Cs:
+            case EL_Cu:
+            case EL_Db:
+            case EL_Dy:
+            case EL_Er:
+            case EL_Es:
+            case EL_Eu:
+            case EL_Fe:
+            case EL_Fm:
+            case EL_Fr:
+            case EL_Ga:
+            case EL_Gd:
+            case EL_Ge:
+            case EL_Hf:
+            case EL_Hg:
+            case EL_Ho:
+            case EL_In:
+            case EL_Ir:
+            case  EL_K:
+            case EL_La:
+            case EL_Li:
+            case EL_Lr:
+            case EL_Lu:
+            case EL_Md:
+            case EL_Mg:
+            case EL_Mn:
+            case EL_Mo:
+            case EL_Na:
+            case EL_Nb:
+            case EL_Nd:
+            case EL_Ni:
+            case EL_No:
+            case EL_Np:
+            case EL_Os:
+            case EL_Pa:
+            case EL_Pb:
+            case EL_Pd:
+            case EL_Pm:
+            case EL_Po:
+            case EL_Pr:
+            case EL_Pt:
+            case EL_Pu:
+            case EL_Ra:
+            case EL_Rb:
+            case EL_Re:
+            case EL_Rf:
+            case EL_Rh:
+            case EL_Ru:
+            case EL_Sb:
+            case EL_Sc:
+            case EL_Sg:
+            case EL_Sm:
+            case EL_Sn:
+            case EL_Sr:
+            case EL_Ta:
+            case EL_Tb:
+            case EL_Tc:
+            case EL_Th:
+            case EL_Ti:
+            case EL_Tl:
+            case EL_Tm:
+            case  EL_U:
+            case  EL_V:
+            case  EL_W:
+            case  EL_Y:
+            case EL_Yb:
+            case EL_Zn:
+            case EL_Zr:
+                return true;
+                break;
+            default:
+                return false;
+                break;
+        }
+    }
+
+    const bool is_hydrogen() const {
+        return (this->el_type==EL_H);
+    }
+    // const bool is_acceptor() const {}
+    // const bool is_donor() const {}
+    // const bool is_hydrophobic() const {}
+};
+
+enum BOND_TYPE {SINGLE_BOND,DOUBLE_BOND,TRIPLE_BOND,AMIDE_BOND,AROMATIC_BOND,DUMMY_BOND,UNKNOWN_BOND,NOT_CONNECTED_BOND,NONE_BOND};
+class Bond {
+    int bond_atom_index;
+    BOND_TYPE Bond_Type;
+public:
+    // Bond() : to_index(-1) {}
+    explicit Bond(const int ai, const BOND_TYPE bt) : bond_atom_index(ai), Bond_Type(bt) {}
+    const int& get_bonded_atom_index() const {
+        return this->bond_atom_index;
+    }
+    const BOND_TYPE& get_bond_type() const {
+        return this->Bond_Type;
+    }
+};
+using Bonds = std::vector<Bond>;
+
+class Atom_Base : public Atom_Type {
+    Vec3d coord = k_nan_vec3d;
+    Bonds bonds;
+    Float charge = 0.0;
+public:
+    //Atom class properties
+    void set_charge(const Float& c) {
+        this->charge = c;
+    }
     void set_coord(const Vec3d& cd) {
         this->coord = cd;
     }
+    void add_bond(const Bond& b) {
+        this->bonds.push_back(b);
+    }
+    const Float& get_charge() const {
+        return this->charge;
+    }
+    const Vec3d& get_coord() const {
+        return this->coord;
+    }
+    const Bonds& get_bonds() const {
+        return this->bonds;
+    }
+};
+
+class Atom : public Atom_Base {
+    int serial;
+    std::string name = "";
+    int res_serial;
+    std::string res_name = "";
+    std::string chain_name = "";
+public:
     void set_name(const std::string& n) {
         this->name = n;
     }
@@ -161,26 +231,6 @@ public:
     }
     void set_res_serial(const int& rs) {
         this->res_serial = rs;
-    }
-    void set_context_index(const int& ci) {
-        this->context_index = ci;
-    }
-
-    void add_bond(const Bond& b) {
-        this->bonds.push_back(b);
-    }
-
-    const Float& get_charge() const {
-        return this->charge;
-    }
-    const ELEMENT_TYPE& get_element_type() const {
-        return this->el_type;
-    }
-    const SYBYL_TYPE& get_sybyl_type() const {
-        return this->sybyl_type;
-    }
-    const AD4_TYPE& get_ad4_type() const {
-        return this->ad4_type;
     }
     const std::string& get_name() const {
         return this->name;
@@ -197,119 +247,8 @@ public:
     const int& get_res_serial() const {
         return this->res_serial;
     }
-    const int& get_context_index() const {
-        return this->context_index;
-    }
-    const Vec3d& get_coord() const {
-        return this->coord;
-    }
-    const Bonds& get_bonds() const {
-        return this->bonds;
-    }
-
-    //Atom chemical physical properties
-    const bool is_metal() const {
-        switch(this->el_type) {
-            case EL_AC:
-            case EL_AG:
-            case EL_AL:
-            case EL_AM:
-            case EL_AU:
-            case EL_BA:
-            case EL_BE:
-            case EL_BI:
-            case EL_BK:
-            case EL_CA:
-            case EL_CD:
-            case EL_CE:
-            case EL_CF:
-            case EL_CM:
-            case EL_CO:
-            case EL_CR:
-            case EL_CS:
-            case EL_CU:
-            case EL_DB:
-            case EL_DY:
-            case EL_ER:
-            case EL_ES:
-            case EL_EU:
-            case EL_FE:
-            case EL_FM:
-            case EL_FR:
-            case EL_GA:
-            case EL_GD:
-            case EL_GE:
-            case EL_HF:
-            case EL_HG:
-            case EL_HO:
-            case EL_IN:
-            case EL_IR:
-            case  EL_K:
-            case EL_LA:
-            case EL_LI:
-            case EL_LR:
-            case EL_LU:
-            case EL_MD:
-            case EL_MG:
-            case EL_MN:
-            case EL_MO:
-            case EL_NA:
-            case EL_NB:
-            case EL_ND:
-            case EL_NI:
-            case EL_NO:
-            case EL_NP:
-            case EL_OS:
-            case EL_PA:
-            case EL_PB:
-            case EL_PD:
-            case EL_PM:
-            case EL_PO:
-            case EL_PR:
-            case EL_PT:
-            case EL_PU:
-            case EL_RA:
-            case EL_RB:
-            case EL_RE:
-            case EL_RF:
-            case EL_RH:
-            case EL_RU:
-            case EL_SB:
-            case EL_SC:
-            case EL_SG:
-            case EL_SM:
-            case EL_SN:
-            case EL_SR:
-            case EL_TA:
-            case EL_TB:
-            case EL_TC:
-            case EL_TH:
-            case EL_TI:
-            case EL_TL:
-            case EL_TM:
-            case  EL_U:
-            case  EL_V:
-            case  EL_W:
-            case  EL_Y:
-            case EL_YB:
-            case EL_ZN:
-            case EL_ZR:
-                return true;
-                break;
-            default:
-                return false;
-                break;
-        }
-    }
-
-    const bool is_hydrogen() const {
-        return (this->el_type==EL_H);
-    }
-    // const bool is_acceptor() const {}
-    // const bool is_donor() const {}
-    // const bool is_hydrophobic() const {}
-
-
 };
+
+using Atoms = std::vector<Atom>;
 
 }

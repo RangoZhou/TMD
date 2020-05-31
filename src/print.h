@@ -52,13 +52,13 @@ inline void print(const Quaternion& q, std::ostream& out = std::cout) { // print
 
 inline void print(const Atom& a, std::ostream& out = std::cout) {
     // std::vector<Bond> bonds;
-	out << std::setfill(' ') << std::setw(6) << std::left << "atom" << std::right << std::setw(5) << a.serial << " "
-		    << std::setw(6) << std::left << " "+a.name << std::right
-		    << std::setw(5) << std::right << a.res_name << std::right << " " << std::setw(1) << a.chain_name
-		    << std::setw(4) << a.res_serial << std::setw(3) << " "
-		    << std::setw(8) << std::fixed << std::setprecision(3) << a.coord[0] << std::setw(8) << a.coord[1]
-		    << std::setw(8) << a.coord[2] << std::setw(6) << a.get_sybyl_type_name() << std::setw(6) << a.get_element_type_name()
-		    << std::setw(10) << a.charge;
+	out << std::setfill(' ') << std::setw(6) << std::left << "atom" << std::right << std::setw(5) << a.get_serial() << " "
+		    << std::setw(6) << std::left << " "+a.get_name() << std::right
+		    << std::setw(5) << std::right << a.get_res_name() << std::right << " " << std::setw(1) << a.get_chain_name()
+		    << std::setw(4) << a.get_res_serial() << std::setw(3) << " "
+		    << std::setw(8) << std::fixed << std::setprecision(3) << a.get_coord()[0] << std::setw(8) << a.get_coord()[1]
+		    << std::setw(8) << a.get_coord()[2] << std::setw(6) << a.get_sybyl_type_name() << std::setw(6) << a.get_element_type_name()
+		    << std::setw(10) << a.get_charge();
 	out << std::defaultfloat << std::setprecision(6) << std::endl;
 }
 

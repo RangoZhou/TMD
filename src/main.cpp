@@ -4,8 +4,8 @@
 #include "TMDConfig.h"
 #include "common.h"
 #include "molecule.h"
-#include "mol2.h"
-#include "pdbqt.h"
+#include "mol2_reader.h"
+#include "tmd_reader.h"
 #include "print.h"
 #include "score.h"
 #include "random.h"
@@ -90,7 +90,7 @@ try {
         ("ligand", po::value<std::string>(&ligand_path), "ligand (TMD)")
         ("sample_type", po::value<std::string>(&sample_type), "sampling_mode: flexible or rigid")
         ("score_type", po::value<std::string>(&score_type), "scoring_function: yw_score, vdw_score")
-        ("optimizer_type", po::value<std::string>(&optimizer_type), "optimizer: stimulated_annealing")
+        ("optimizer_type", po::value<std::string>(&optimizer_type), "optimizer: simulated_annealing or quasi_newton")
     ;
     //options_description search_area("Search area (required, except with --score_only)");
     po::options_description search_area("Search space (required)");
@@ -325,8 +325,10 @@ try {
     }
     tee << "using " << sample_type << " sampling mode" << std::endl;
     tmd::OPTIMIZATION_MODE Optimizer_Type;
-    if(optimizer_type=="stimulated_annealing") {
+    if(optimizer_type=="simulated_annealing") {
         Optimizer_Type = tmd::SIMULATED_ANNEALING;
+    } else if(optimizer_type=="quasi_newton") {
+        Optimizer_Type = tmd::QUASI_NEWTON;
     } else {
         assert(false);
     }
@@ -368,7 +370,7 @@ try {
     //get pocket
     tmd::Pocket pocket(tee);
     // pocket.find_pocket(rna);
-    // tee << "find " << pocket.sites.size() << " pocket sites" << std::endl;
+    tee << "find " << pocket.sites.size() << " pocket sites" << std::endl;
 
     // std::ofstream pocket_file("./pocket.mol2");
     // //out pocket to file in pdb format
@@ -413,21 +415,27 @@ try {
     }
 
     sampling.docking();
+
+    tee << "finish docking" << std::endl;
+
+    tmd::Conformers conformers = sampling.get_conformers();
+    conformers.sort_by_score();
+    conformers.prune_by_cutoff(100);
     tee << "output ligand: " << out_path << std::endl;
     // const tmd::Sampled_Ligands& clustered_ligands = sampling.cluster();
-    tee << "has " << sampling.num_conformer() << " conformers stored" << std::endl;
+    tee << "has " << conformers.conformer_num() << " conformers stored" << std::endl;
     std::ofstream outligand_final(out_path);
     assert(outligand_final);
     int model_index = 0;
-    int conformer_num_step = sampling.num_conformer() < 500 ? 1 : sampling.num_conformer()/500.0;
-    for(int ci = sampling.num_conformer()-1; ci >= 0; ci -= conformer_num_step) {
-        tee << "conformer index: " << ci << " model index: " << model_index << " rmsd: " << sampling.get_conformers()[ci].rmsd << " score: " << sampling.get_conformers()[ci].score << std::endl;
-        assert(ci < sampling.num_conformer());
-        sampling.output_conformer(ci,++model_index,outligand_final);
+    int conformer_num_step = conformers.conformer_num() < 500 ? 1 : conformers.conformer_num()/500.0;
+    for(int ci = 0; ci < conformers.conformer_num(); ci += conformer_num_step) {
+        if(ci >= conformers.conformer_num()) break;
+        tee << "conformer index: " << ci << " model index: " << model_index << " rmsd: " << conformers.get_conformers()[ci].rmsd << " score: " << conformers.get_conformers()[ci].score << std::endl;
+        assert(ci < conformers.conformer_num());
+        conformers.output_conformer(ci,++model_index,outligand_final);
         if(model_index>=500) {
             break;
         }
-        if(ci < conformer_num_step) break;
     }
     outligand_final.close();
     tee << std::endl;

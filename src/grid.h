@@ -98,50 +98,71 @@ struct Grid {
     Grid() {}
     Grid(const bool f) : flag(f) {}
 };
+const Grid k_false_grid(false);
 struct Grids {
     Float width;
     Array3d<Grid> g_data;
     int g_i, g_j, g_k;
-    int shift_i, shift_j, shift_k;
-    Grid default_grid;
+    int min_i, min_j, min_k;
 public:
     //column-major
-    Grids() : g_i(0), g_j(0), g_k(0), shift_i(0), shift_j(0), shift_k(0), width(0) {
+    Grids() : g_i(0), g_j(0), g_k(0), min_i(0), min_j(0), min_k(0), width(0) {
         // std::cout << "grids init" << std::endl;
     }
-    Grids(const int ii, const int jj, const int kk, const int si, const int sj, const int sk, const Float w, const Grid& filler_val) : g_data(ii,jj,kk,filler_val), g_i(ii), g_j(jj), g_k(kk), shift_i(si), shift_j(sj), shift_k(sk), width(w) {
+    Grids(const int ii, const int jj, const int kk, const int si, const int sj, const int sk, const Float w, const Grid& filler_val) : g_data(ii,jj,kk,filler_val), g_i(ii), g_j(jj), g_k(kk), min_i(si), min_j(sj), min_k(sk), width(w) {
         #ifdef DEBUG
         assert(ii >= 0 && jj >= 0 && kk >= 0);
         assert(w >= 0.0);
         #endif
     }
-    const Grid& operator()(int i, int j, int k) const {
+    const Grid& at(int i, int j, int k) const {
         if(this->out_boundary(i,j,k)) {
-            return this->default_grid;
+            return k_false_grid;
         }
         else {
             #ifdef DEBUG
-            assert(i-this->shift_i >= 0 && j-this->shift_j >= 0 && k-this->shift_k >= 0);
+            assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
             #endif
-            return g_data(i-this->shift_i,j-this->shift_j,k-this->shift_k);
+            return g_data(i-this->min_i,j-this->min_j,k-this->min_k);
         }
     }
+    // const Grid& operator()(int i, int j, int k) const {
+    //     if(this->out_boundary(i,j,k)) {
+    //         return k_false_grid;
+    //     }
+    //     else {
+    //         #ifdef DEBUG
+    //         assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
+    //         #endif
+    //         return g_data(i-this->min_i,j-this->min_j,k-this->min_k);
+    //     }
+    // }
+    // be careful this operator will conflict with the const one
     Grid& operator()(int i, int j, int k) {
         if(this->out_boundary(i,j,k)) {
-            return this->default_grid;
+            std::cout << i << " " << j << " " << k << " is out of boundary, size: " << g_i << " " << g_j << " " << g_k << " min: " << min_i << " " << min_j << " " << min_k  << std::endl;
+            assert(false);
         }
-        else {
-            #ifdef DEBUG
-            assert(i-this->shift_i >= 0 && j-this->shift_j >= 0 && k-this->shift_k >= 0);
-            #endif
-            return g_data(i-this->shift_i,j-this->shift_j,k-this->shift_k);
+        #ifdef DEBUG
+        assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
+        #endif
+        return g_data(i-this->min_i,j-this->min_j,k-this->min_k);
+    }
+    void assign(int i, int j, int k, const Grid& g) {
+        if(this->out_boundary(i,j,k)) {
+            std::cout << i << " " << j << " " << k << " is out of boundary, size: " << g_i << " " << g_j << " " << g_k << " min: " << min_i << " " << min_j << " " << min_k  << std::endl;
+            assert(false);
         }
+        #ifdef DEBUG
+        assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
+        #endif
+        g_data(i-this->min_i,j-this->min_j,k-this->min_k) = g;
     }
 
     bool out_boundary(int i, int j, int k) const {
-        const int& ii = i - this->shift_i;
-        const int& jj = j - this->shift_j;
-        const int& kk = k - this->shift_k;
+        const int& ii = i - this->min_i;
+        const int& jj = j - this->min_j;
+        const int& kk = k - this->min_k;
         if(kk >= g_k || kk < 0 || jj >= g_j || jj < 0 || ii >= g_i || ii < 0) {
             return true;
         }

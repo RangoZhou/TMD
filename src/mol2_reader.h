@@ -23,10 +23,13 @@ namespace tmd {
         else return MOL2_NONE;
 	}
 
-	inline const Atom parse_mol2_atom(const int& ci, const std::string &sline) {
+	inline const Atom parse_mol2_atom(const std::string &sline) {
 		std::vector<std::string> atom_items = string2vector(sline);
 		const std::string sybyl_atom_type = trim(atom_items[5]);
-		Atom atom(sybyl_atom_type,SYBYL);
+
+		Atom atom;
+		atom.set_sybyl_type(string_to_sybyl_type(sybyl_atom_type));
+		atom.set_element_type(sybyl_type_to_element_type(atom.get_sybyl_type()));
 		// std::cout << sline << std::endl;
 		atom.set_charge(std::stod(atom_items[8]));
 		const Float x = std::stod(atom_items[2]);
@@ -37,9 +40,7 @@ namespace tmd {
 		atom.set_res_name(trim(atom_items[7]));
 		atom.set_chain_name("");
 		atom.set_serial(std::stoi(atom_items[0]));
-
 		atom.set_res_serial(std::stoi(atom_items[6]));
-		atom.set_context_index(ci);
 		return atom;
 	}
 
@@ -55,8 +56,7 @@ namespace tmd {
 		MOL2_BLOCK_TYPE Mol2_Block_Type_Flag = MOL2_NONE;
 
 		while(std::getline(in_rna,sline)) {
-			int context_index = r.contexts.size();
-			r.contexts.push_back(Context(context_index,sline));
+			r.contexts.push_back(Context(-1,sline));
 			// tee << sline << std::endl;
 			if(sline=="") continue;
 
@@ -67,10 +67,11 @@ namespace tmd {
 			}
 			switch(Mol2_Block_Type_Flag) {
 				case MOL2_ATOM: {
-					const Atom a = parse_mol2_atom(context_index,sline);
+					const Atom a = parse_mol2_atom(sline);
 					int a_i = r.add_atom(a);
 					int r_a_i = r.add_ref_atom(a);
 					assert(a_i == r_a_i);
+					r.contexts[r.contexts.size()-1].atom_index = a_i;
 					break;
 				}
 				case MOL2_MOLECULE:

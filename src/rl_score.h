@@ -2,6 +2,8 @@
 // 有点大。不过下面这个快是真的快。
 // 我准备把rna分割到一个相对大的cell，每次遍历cell与ligand上的atom
 
+#pragma once
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -13,22 +15,24 @@
 #include <algorithm>
 #include <time.h>
 #include <functional>
+#include <set>
+
 #include "atom.h"
 #include "molecule.h"
 #include "grid.h"
 #include "matrix.h"
+#include "score.h"
 
 namespace lz {
 
 using namespace std;
 
 inline void print_vector(const std::string s, const std::vector<double>& v) {
-    std::cout << s << ":" << std::endl;
-    std::cout << "****";
+    std::cout << s << ": [min,max]: [" << *std::min_element(v.begin(), v.end()) << "," << *std::max_element(v.begin(), v.end()) << "]" << std::endl;
     for(const auto& a : v) {
         std::cout << a << " ";
     }
-    std::cout << "****" << std::endl;
+    std::cout << std::endl;
 }
 
 // struct thread_parameter
@@ -387,7 +391,8 @@ public:
     tmd::Grids lj_grids;
 
     tmd::Strictly_Triangular_Matrix<double> ele_prefix_mat;
-    tmd::Triangular_Matrix<double> pol_prefix_mat;
+    tmd::Strictly_Triangular_Matrix<double> pol_prefix_mat;
+    std::vector<double> self_prefix_vector;
 
     std::vector<std::vector<sasa_polar>> sasa_polar_table;
 
@@ -421,9 +426,9 @@ public:
     }void print_rna_born_radius_table() {
         print_vector("rna_born_radius_table",this->rna_born_radius_table);
     }
-    // void print_complex_born_radius_table() {
-    //     print_vector("complex_born_radius_table",this->complex_born_radius_table);
-    // }
+    void print_complex_born_radius_table() {
+        print_vector("complex_born_radius_table",this->complex_born_radius_table);
+    }
 };
 
 inline const double max(const double a, const double b)
@@ -445,34 +450,30 @@ inline const double min(const double a, const double b)
         return (b);
 }
 
-// enum RL_SCORE_MODE {RL_LJ_ONLY,RL_ALL};
-class RL_Score {
-    // std::vector<lz::pocket_info> pockets;
+class RL_Score : public tmd::Scoring_Function {
+    const tmd::RNA& rna;
+    const tmd::Ligand& lig;
     parameter P;
     std::ostream& tee;
-    // RL_SCORE_MODE RL_Score_Mode = RL_ALL;
 public:
-    RL_Score(std::ostream& lg) : tee(lg) {
-        tee << "RL_Score init" << std::endl;
+    RL_Score(const tmd::RNA& r, const tmd::Ligand& l, std::ostream& lg) : rna(r), lig(l), tee(lg) {
+        tee << "RL_Score construct" << std::endl;
     }
-    void init(const tmd::RNA& rna, const tmd::Ligand& lig);
-    const double evaluate(const tmd::RNA& rna, const tmd::Ligand& lig);
-
-    // void set_mode(const RL_SCORE_MODE& rl_sm) {
-    //     this->RL_Score_Mode = rl_sm;
-    // }
+    void init();
+    const tmd::Float evaluate();
 };
 
 
-inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
+inline void RL_Score::init() {
+    tee << "RL_Score init" << std::endl;
     // string filename = "input/"+argv_str[1]+"/"+argv_str[1]+"_ligand.mol2";
-    P.lig.SetValue(CC,yz_lig.get_atoms_reference());
+    P.lig.SetValue(CC,this->lig.get_atoms_reference());
     if(P.lig.HH.size()>0) P.lig.H_charge_transfer();
     // lig.Move_to_Center_Easy();
     // cout<<"native Ligand input finish "<<lig.wH.size()<<" "<<P.lig_heavy_size<<endl;
 
     // filename = "input/"+argv_str[1]+"/"+argv_str[1]+"_RNA.mol2";
-    P.rna.SetValue(CC,yz_rna.get_atoms_reference());
+    P.rna.SetValue(CC,this->rna.get_atoms_reference());
     P.rna.Find_Max_and_Min();
     if(P.rna.HH.size()>0) P.rna.H_charge_transfer();
     // cout<<"Receptor input finish "<<rna.wH.size()<<" "<<P.rna_heavy_size<<endl;
@@ -489,6 +490,25 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
     P.lig_HH_size = P.lig.HH.size();
     P.complex_wH_size = P.complex.wH.size();
     P.complex_HH_size = P.complex.HH.size();
+
+
+    // cal ele prefix matrix
+    P.ele_prefix_mat.resize(P.complex_heavy_size, 0.0);
+    P.pol_prefix_mat.resize(P.complex_heavy_size, 0.0);
+    P.self_prefix_vector.resize(P.complex_heavy_size, 0.0);
+    for(int i = 0; i < P.complex_heavy_size; ++i) {
+        for(int j = 0; j < P.complex_heavy_size; ++j) {
+            if(i <= j) {
+                if(i!=j) {
+                    P.ele_prefix_mat(i,j) = P.lB0 / P.e1 * P.complex.noH[i].charge * P.complex.noH[j].charge;
+                    P.pol_prefix_mat(i,j) = P.lB0 * (1. / P.e2 - 1. / P.e1) * P.complex.noH[i].charge * P.complex.noH[j].charge;
+                }
+                if(i==j) {
+                    P.self_prefix_vector[i] = 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.complex.noH[i].charge * P.complex.noH[j].charge;
+                }
+            }
+        }
+    }
 
     //cal LJ table
     // std::cout << "start init LJ" << std::endl;
@@ -584,7 +604,7 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
             int real_i = i + P.rna_heavy_size;
             int real_j = j + P.rna_heavy_size;
             if(real_i < real_j) {
-                const tmd::Atom& ai = yz_lig.get_atoms_reference()[P.complex.noH[real_i].yz_atom_index];
+                const tmd::Atom& ai = this->lig.get_atoms_reference()[P.complex.noH[real_i].yz_atom_index];
                 const int& aj = P.complex.noH[real_j].yz_atom_index;
                 for(const tmd::Bond& b : ai.get_bonds()) {
                     if(b.get_bonded_atom_index() == aj && b.get_bond_type() != tmd::NONE_BOND && b.get_bond_type() != tmd::NOT_CONNECTED_BOND) {
@@ -637,10 +657,15 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
                     Uij = dis + P.rna.noH[j].born_scale * radj;
                 }
                 intb = intb + 0.5 * ((1. / Lij - 1. / Uij) + (P.rna.noH[j].born_scale * P.rna.noH[j].born_scale * radj * radj / (4. * dis) - dis / 4.) * (1. / (Lij * Lij) - 1. / (Uij * Uij)) + (1. / (2. * dis)) * log(Lij / Uij));
+
+                // std::cout << j << " " << radi << " " << radj << " " << P.rna.noH[i].born_scale << " " << P.rna.noH[j].born_scale << " " << dis << " " << intb << std::endl;
             }
         }
+        // exit(2);
         P.rna_fixed_born_part_table[i] = intb;
         P.rna_born_radius_table[i] = 1. / (1. / radi - intb);
+
+        
         //  printf("%d %lf %lf\n",i,rb0[i],rrr_RNA[i]);
     }
 
@@ -660,7 +685,7 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
                 (P.rna.noH[i].y - P.rna.noH[j].y) * (P.rna.noH[i].y - P.rna.noH[j].y) +
                 (P.rna.noH[i].z - P.rna.noH[j].z) * (P.rna.noH[i].z - P.rna.noH[j].z);
                 dis = sqrt(dis);
-                P.RNA_POLenergy = P.RNA_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.rna.noH[i].charge * P.rna.noH[j].charge / sqrt(dis * dis + P.rna_born_radius_table[i] * P.rna_born_radius_table[j] * exp(-dis * dis / (4. * P.rna_born_radius_table[i] * P.rna_born_radius_table[j])));
+                P.RNA_POLenergy = P.RNA_POLenergy + P.pol_prefix_mat(i,j) / sqrt(dis * dis + P.rna_born_radius_table[i] * P.rna_born_radius_table[j] * exp(-dis * dis / (4. * P.rna_born_radius_table[i] * P.rna_born_radius_table[j])));
                 // P.rna_dis_mat[i][j] = dis;
                 // P.rna_dis_mat[j][i] = dis;
                 P.complex_dis_mat(i,j) = dis;
@@ -843,7 +868,7 @@ inline void RL_Score::init(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig) {
 
 }
 
-inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand& yz_lig)
+inline const tmd::Float RL_Score::evaluate()
 {
     // clock_t start,mid1,mid2,end;
     // start=clock();
@@ -852,10 +877,10 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
 
     //update lig's conformation and complex
     int index_noH=0,index_wH=0,index_HH=0;
-    const tmd::Atoms& yz_lig_atoms_ref = yz_lig.get_atoms_reference();
+    const tmd::Atoms& yz_lig_atoms_ref = this->lig.get_atoms_reference();
     // std::cout << yz_lig_atoms_ref.size() << " " << P.lig.wH.size() << std::endl;
     assert(yz_lig_atoms_ref.size()==P.lig.wH.size());
-    for(const tmd::Atom& atom : yz_lig.get_atoms_reference()) {
+    for(const tmd::Atom& atom : this->lig.get_atoms_reference()) {
         const tmd::Vec3d& xyz = atom.get_coord();
         if(P.lig.wH[index_wH].element != "H" && P.lig.wH[index_wH].element != "h")
         {
@@ -908,6 +933,55 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
             }
         }
     }
+
+
+    // std::cout << "cal LJ" << std::endl;
+    // RNA-ligand LJ step 2
+    P.LJenergy = 0.0;
+    for(int i = 0; i < P.lig_heavy_size; i++) {
+        const double& lig_x = P.lig.noH[i].x;
+        const double& lig_y = P.lig.noH[i].y;
+        const double& lig_z = P.lig.noH[i].z;
+        const int atom_x_grid = static_cast<int>(lig_x/P.lj_grids.width);
+        const int atom_y_grid = static_cast<int>(lig_y/P.lj_grids.width);
+        const int atom_z_grid = static_cast<int>(lig_z/P.lj_grids.width);
+
+        const tmd::Grid& grid = P.lj_grids.at(atom_x_grid,atom_y_grid,atom_z_grid);
+        if(grid.flag) {
+            for(const int& r_j : grid.rigid_atoms) {
+                // const double& rna_x = P.rna.noH[r_j].x;
+                // const double& rna_y = P.rna.noH[r_j].y;
+                // const double& rna_z = P.rna.noH[r_j].z;
+                // const double& dis = sqrt((rna_x-lig_x)*(rna_x-lig_x)+(rna_y-lig_y)*(rna_y-lig_y)+(rna_z-lig_z)*(rna_z-lig_z));
+                const double& dis = P.complex_dis_mat(r_j, i+P.rna_heavy_size);
+                const double equ_dis = (P.rna.noH[r_j].radius + P.lig.noH[i].radius);
+                if (dis < P.LJ_cut * equ_dis) {
+                    const int iLJ_dis = (dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
+                    P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[r_j].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
+                }
+            }
+        }
+    }
+    // for (int i = 0; i < P.lig_heavy_size; i++)
+    // {
+    //     for (int iatom_RNA = 0; iatom_RNA < P.rna_heavy_size; iatom_RNA++)
+    //     {
+    //         const double equ_dis = (P.rna.noH[iatom_RNA].radius + P.lig.noH[i].radius);
+    //         const double cal_dis = sqrt(
+    //             (P.lig.noH[i].x - P.rna.noH[iatom_RNA].x) * (P.lig.noH[i].x - P.rna.noH[iatom_RNA].x)
+    //           + (P.lig.noH[i].y - P.rna.noH[iatom_RNA].y) * (P.lig.noH[i].y - P.rna.noH[iatom_RNA].y)
+    //           + (P.lig.noH[i].z - P.rna.noH[iatom_RNA].z) * (P.lig.noH[i].z - P.rna.noH[iatom_RNA].z)
+    //         );
+    //         P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) = cal_dis;
+    //         // P.complex_dis_mat[i+P.rna_heavy_size][iatom_RNA] = cal_dis;
+    //         if (cal_dis < P.LJ_cut * equ_dis)
+    //         {
+    //             const int iLJ_dis = (cal_dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
+    //             P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
+    //         }
+    //     }
+    // }
+
 
     // if(this->RL_Score_Mode == RL_ALL) {
         // std::cout << "update born raidus for ligand every time" << std::endl;
@@ -1017,6 +1091,10 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
             } else {
                 P.complex_born_radius_table[i] = 1. / (1. / radi - intb);
             }
+
+            if(P.complex_born_radius_table[i] < 0) {
+                return P.LJenergy;
+            }
             //  printf("%d %lf %lf\n",i,rb0_complex[i],rrr_complex[i]);
         }
     // }
@@ -1030,53 +1108,6 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
     //         P.lig_after_born_radius_table[i - P.rna_heavy_size] = P.complex_born_radius_table[i];
     // }
 
-    // std::cout << "cal LJ" << std::endl;
-    // RNA-ligand LJ step 2
-    P.LJenergy = 0.0;
-    for(int i = 0; i < P.lig_heavy_size; i++) {
-        const double& lig_x = P.lig.noH[i].x;
-        const double& lig_y = P.lig.noH[i].y;
-        const double& lig_z = P.lig.noH[i].z;
-        const int atom_x_grid = static_cast<int>(lig_x/P.lj_grids.width);
-        const int atom_y_grid = static_cast<int>(lig_y/P.lj_grids.width);
-        const int atom_z_grid = static_cast<int>(lig_z/P.lj_grids.width);
-
-        const tmd::Grid& grid = P.lj_grids.at(atom_x_grid,atom_y_grid,atom_z_grid);
-        if(grid.flag) {
-            for(const int& r_j : grid.rigid_atoms) {
-                // const double& rna_x = P.rna.noH[r_j].x;
-                // const double& rna_y = P.rna.noH[r_j].y;
-                // const double& rna_z = P.rna.noH[r_j].z;
-                // const double& dis = sqrt((rna_x-lig_x)*(rna_x-lig_x)+(rna_y-lig_y)*(rna_y-lig_y)+(rna_z-lig_z)*(rna_z-lig_z));
-                const double& dis = P.complex_dis_mat(r_j, i+P.rna_heavy_size);
-                const double equ_dis = (P.rna.noH[r_j].radius + P.lig.noH[i].radius);
-                if (dis < P.LJ_cut * equ_dis) {
-                    const int iLJ_dis = (dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
-                    P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[r_j].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
-                }
-            }
-        }
-    }
-    // for (int i = 0; i < P.lig_heavy_size; i++)
-    // {
-    //     for (int iatom_RNA = 0; iatom_RNA < P.rna_heavy_size; iatom_RNA++)
-    //     {
-    //         const double equ_dis = (P.rna.noH[iatom_RNA].radius + P.lig.noH[i].radius);
-    //         const double cal_dis = sqrt(
-    //             (P.lig.noH[i].x - P.rna.noH[iatom_RNA].x) * (P.lig.noH[i].x - P.rna.noH[iatom_RNA].x)
-    //           + (P.lig.noH[i].y - P.rna.noH[iatom_RNA].y) * (P.lig.noH[i].y - P.rna.noH[iatom_RNA].y)
-    //           + (P.lig.noH[i].z - P.rna.noH[iatom_RNA].z) * (P.lig.noH[i].z - P.rna.noH[iatom_RNA].z)
-    //         );
-    //         P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) = cal_dis;
-    //         // P.complex_dis_mat[i+P.rna_heavy_size][iatom_RNA] = cal_dis;
-    //         if (cal_dis < P.LJ_cut * equ_dis)
-    //         {
-    //             const int iLJ_dis = (cal_dis / (P.LJ_cut * equ_dis)) * P.LJstep + 1;
-    //             P.LJenergy = P.LJenergy + P.LJ_table[P.rna.noH[iatom_RNA].type_idx][P.lig.noH[i].type_idx][iLJ_dis];
-    //         }
-    //     }
-    // }
-
 
     // P.ligand_ELEenergy = 0.0;
     P.ligand_LJenergy = 0.0;
@@ -1085,7 +1116,7 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
     for (int i = 0; i < P.lig_heavy_size; i++)
     {
         // if(this->RL_Score_Mode == RL_ALL) {
-            P.ligand_SELFenergy = P.ligand_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.lig.noH[i].charge * P.lig.noH[i].charge * (1. / P.complex_born_radius_table[i+P.rna_heavy_size] - 1. / P.lig_born_radius_table[i]);
+            P.ligand_SELFenergy = P.ligand_SELFenergy + P.self_prefix_vector[i+P.rna_heavy_size] * (1. / P.complex_born_radius_table[i+P.rna_heavy_size] - 1. / P.lig_born_radius_table[i]);
         // }
         for (int j = 0; j < P.lig_heavy_size; j++)
         {
@@ -1093,13 +1124,13 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
                 const double& cal_dis = P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
                 const double& cal_dis_square = P.complex_dis_square_mat(i+P.rna_heavy_size,j+P.rna_heavy_size);
                 // if(this->RL_Score_Mode == RL_ALL) {
-                    P.ligand_POLenergy = P.ligand_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.lig.noH[i].charge * P.lig.noH[j].charge / sqrt(cal_dis_square + P.lig_born_radius_table[i] * P.lig_born_radius_table[j] * exp(-cal_dis_square / (4. * P.lig_born_radius_table[i] * P.lig_born_radius_table[j])));
+                    P.ligand_POLenergy = P.ligand_POLenergy + P.pol_prefix_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) / sqrt(cal_dis_square + P.lig_born_radius_table[i] * P.lig_born_radius_table[j] * exp(-cal_dis_square / (4. * P.lig_born_radius_table[i] * P.lig_born_radius_table[j])));
                 // }
 
                 if(P.bond_type_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) == tmd::DUMMY_BOND) {
                     continue;
                 }
-                // P.ligand_ELEenergy = P.ligand_ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.lig.noH[j].charge / cal_dis;
+                // P.ligand_ELEenergy = P.ligand_ELEenergy + P.ele_prefix_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) / cal_dis;
 
                 const double& equ_dis = (P.lig.noH[j].radius + P.lig.noH[i].radius);
                 // P.complex_dis_mat(i+P.rna_heavy_size,j+P.rna_heavy_size) = cal_dis;
@@ -1119,16 +1150,16 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
         P.HBenergy = 0.0;
         for (int iatom_RNA = 0; iatom_RNA < P.rna_heavy_size; iatom_RNA++)
         {
-            P.RNA_SELFenergy = P.RNA_SELFenergy + 0.5 * (1. / P.e2 - 1. / P.e1) * P.lB0 * P.rna.noH[iatom_RNA].charge * P.rna.noH[iatom_RNA].charge * (1. / P.complex_born_radius_table[iatom_RNA] - 1. / P.rna_born_radius_table[iatom_RNA]);
+            P.RNA_SELFenergy = P.RNA_SELFenergy + P.self_prefix_vector[iatom_RNA] * (1. / P.complex_born_radius_table[iatom_RNA] - 1. / P.rna_born_radius_table[iatom_RNA]);
             for (int i = 0; i < P.lig_heavy_size; i++)
             {
-                P.ELEenergy = P.ELEenergy + P.lB0 / P.e1 * P.lig.noH[i].charge * P.rna.noH[iatom_RNA].charge / P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size);
+                P.ELEenergy = P.ELEenergy + P.ele_prefix_mat(iatom_RNA,i+P.rna_heavy_size) / P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size);
 
 
                 ///////////////////////////////////////////////////////////////////////
                 // if(P.ELEenergy < -400) {
                 //     std::cout << P.ELEenergy << " " << iatom_RNA << " " << i << " " << P.lig.noH[i].charge << " " << P.rna.noH[iatom_RNA].charge << " " << P.complex_dis_mat(iatom_RNA,i+P.rna_heavy_size) << std::endl;
-                //     yz_lig.write(std::cout);
+                //     this->lig.write(std::cout);
 
                 //     const double& dis = P.complex_dis_mat(iatom_RNA, i+P.rna_heavy_size);
                 //     const double equ_dis = (P.rna.noH[iatom_RNA].radius + P.lig.noH[i].radius);
@@ -1201,7 +1232,7 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
                 {
                     const double& dis = P.complex_dis_mat(i,j);
                     const double& dis_square = P.complex_dis_square_mat(i,j);
-                    P.complex_POLenergy = P.complex_POLenergy + P.lB0 * (1. / P.e2 - 1. / P.e1) * P.complex.noH[i].charge * P.complex.noH[j].charge / sqrt(dis_square + P.complex_born_radius_table[i] * P.complex_born_radius_table[j] * exp(-dis_square / (4. * P.complex_born_radius_table[i] * P.complex_born_radius_table[j])));
+                    P.complex_POLenergy = P.complex_POLenergy + P.pol_prefix_mat(i,j) / sqrt(dis_square + P.complex_born_radius_table[i] * P.complex_born_radius_table[j] * exp(-dis_square / (4. * P.complex_born_radius_table[i] * P.complex_born_radius_table[j])));
 
                     // if(std::isnan(P.complex_POLenergy)) {
                     //     std::cout << "complex polenergy is nan" << std::endl;
@@ -1310,25 +1341,27 @@ inline const double RL_Score::evaluate(const tmd::RNA& yz_rna, const tmd::Ligand
             // +P.ligand_ELEenergy
             +P.ligand_LJenergy;
 
-    // if(energy < 23.18 && yz_lig.rmsd_with_respect_to_ref_atoms() < 20) {
+    // if(energy < 23.18 && this->lig.rmsd_with_respect_to_ref_atoms() < 20) {
     //     std::cout << "score mode: " << this->RL_Score_Mode << std::endl;
-    //     yz_lig.write(std::cout);
-    //     std::cout << "LJenergy: " << P.LJenergy << std::endl;
-    //     std::cout << "ELEenergy: " << P.ELEenergy << std::endl;
-    //     std::cout << "POLenergy: " << P.POLenergy  << " --> complex: " << P.complex_POLenergy << " rna: " << P.RNA_POLenergy << " lig: " << P.ligand_POLenergy << std::endl;
-    //     std::cout << "ligand_SELFenergy: " << P.ligand_SELFenergy << std::endl;
-    //     std::cout << "SASAenergy: " << P.SASAenergy << std::endl;
-    //     std::cout << "HBenergy: " << P.HBenergy << std::endl;
-    //     std::cout << "RNA_SELFenergy: " << P.RNA_SELFenergy << std::endl;
-    //     std::cout << "ligand_LJenergy: " << P.ligand_LJenergy << std::endl;
-    //     // std::cout << "ligand_ELEenergy: " << P.ligand_ELEenergy << std::endl;
-    //     std::cout << "total energy: " << energy << std::endl;
-    //     // P.print_lig_born_radius_table();
-    //     // P.print_rna_born_radius_table();
-    //     // P.print_lig_after_born_radius_table();
-    //     // P.print_rna_after_born_radius_table();
-    //     // P.print_complex_born_radius_table();
-    //     std::cout << "----------------------------------------------" << std::endl;
+    //     this->lig.write(std::cout);
+        std::cout << "LJenergy: " << P.LJenergy << std::endl;
+        std::cout << "ELEenergy: " << P.ELEenergy << std::endl;
+        std::cout << "POLenergy: " << P.POLenergy  << " --> complex: " << P.complex_POLenergy << " rna: " << P.RNA_POLenergy << " lig: " << P.ligand_POLenergy << std::endl;
+        std::cout << "ligand_SELFenergy: " << P.ligand_SELFenergy << std::endl;
+        std::cout << "SASAenergy: " << P.SASAenergy << std::endl;
+        std::cout << "HBenergy: " << P.HBenergy << std::endl;
+        std::cout << "RNA_SELFenergy: " << P.RNA_SELFenergy << std::endl;
+        std::cout << "ligand_LJenergy: " << P.ligand_LJenergy << std::endl;
+        // std::cout << "ligand_ELEenergy: " << P.ligand_ELEenergy << std::endl;
+        std::cout << "total energy: " << energy << std::endl;
+        std::cout << "rna-------------------------------------------" << std::endl;
+        P.print_rna_born_radius_table();
+        std::cout << "rna-------------------------------------------" << std::endl;
+        P.print_lig_born_radius_table();
+        std::cout << "complex---------------------------------------" << std::endl;
+        P.print_complex_born_radius_table();
+        std::cout << "----------------------------------------------" << std::endl;
+        // exit(2);
     //     // if(energy<-1000) {
     //     //     exit(2);
     //     // }

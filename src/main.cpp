@@ -8,6 +8,11 @@
 #include "tmd_reader.h"
 #include "print.h"
 #include "score.h"
+#include "yw_score.h"
+// #include "rl_score.h"
+// #include "rl_score_new_born.h"
+#include "born_radius.h"
+
 #include "random.h"
 #include "sampling.h"
 // #include "file.h"
@@ -299,18 +304,28 @@ try {
     // tee << "print initial ligand:" << std::endl;
     // ligand.write(tee);
 
-    //
-    tmd::SCORE_MODE Score_Type;
+    tee << "main: scoring function construct and init..." << std::endl;
+    tmd::Scoring_Function* scoring_function_ptr = nullptr;
+    tmd::YW_Score yw_score = tmd::YW_Score(rna,ligand,tee);
+    lz::RL_Score rl_score = lz::RL_Score(rna,ligand,tee);
+    // tmd::SCORE_MODE Score_Type;
     if(score_type=="yw_score") {
-        Score_Type = tmd::YW_SCORE;
+        // Score_Type = tmd::YW_SCORE;
+        scoring_function_ptr = &yw_score;
+        scoring_function_ptr->init();
     } else if(score_type=="rl_score") {
-        Score_Type = tmd::RL_SCORE;
+        // Score_Type = tmd::RL_SCORE;
+        scoring_function_ptr = &rl_score;
+        scoring_function_ptr->init();
     } else if(score_type=="vdw_ligand") {
-        Score_Type = tmd::VDW_LIGAND;
+        // Score_Type = tmd::VDW_LIGAND;
+        assert(false);
     } else if(score_type=="vdw_rna_ligand") {
-        Score_Type = tmd::VDW_RNA_LIGAND;
+        // Score_Type = tmd::VDW_RNA_LIGAND;
+        assert(false);
     } else if(score_type=="all") {
-        Score_Type = tmd::ALL;
+        // Score_Type = tmd::ALL;
+        assert(false);
     } else {
         assert(false);
     }
@@ -333,9 +348,6 @@ try {
         assert(false);
     }
     tee << "using " << optimizer_type << " optimizer" << std::endl;
-
-    tee << "scoring function init..." << std::endl;
-    tmd::Scoring_Function scoring_function(rna,ligand,Score_Type,tee);
 
     tmd::Vec3d center;
     tmd::Vec3d corner1;
@@ -399,9 +411,9 @@ try {
     // pocket_file.close();
 
 
-    tmd::Sampling sampling(rna,ligand,scoring_function,tmd::Box(center,corner1,corner2),pocket,Sample_Type,Optimizer_Type,generator,tee);
+    tmd::Sampling sampling(rna,ligand,scoring_function_ptr,tmd::Box(center,corner1,corner2),pocket,Sample_Type,Optimizer_Type,generator,tee);
 
-    tee << "scoring evaluate for input conf: " << scoring_function.evaluate() << std::endl;
+    tee << "main: scoring evaluate for input conf ------> " << scoring_function_ptr->evaluate() << std::endl;
 
     if(randomize_only) {
         tee << "finish randomize only!" << std::endl;
@@ -409,7 +421,7 @@ try {
     }
 
     if(score_only) {
-        tee << "scoring evaluate: " << scoring_function.evaluate() << std::endl;
+        tee << "scoring evaluate: " << scoring_function_ptr->evaluate() << std::endl;
         tee << "finish score only!" << std::endl;
         return 0;
     }

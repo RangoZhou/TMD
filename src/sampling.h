@@ -36,7 +36,7 @@ class Sampling {
     const RNA& rna;
     Ligand& lig;
     Conformers conformers;
-    Scoring_Function& score_func;
+    Scoring_Function* score_func_ptr;
     SAMPLE_MODE Sample_Mode = SAMPLE_RIGID;
     OPTIMIZATION_MODE Optimization_Mode = SIMULATED_ANNEALING;
     Box docking_box;
@@ -48,7 +48,7 @@ class Sampling {
     Float min_score = k_max_float;
 
 public:
-    Sampling(const RNA& r, Ligand& l, Scoring_Function& sf, const Box& b, const Pocket& p, SAMPLE_MODE s_mode, OPTIMIZATION_MODE o_mode, RNGType& g, std::ostream& lg) : rna(r), lig(l), conformers(l.get_contexts()), score_func(sf), docking_box(b), pocket(p), Sample_Mode(s_mode), Optimization_Mode(o_mode), generator(g), tee(lg) {}
+    Sampling(const RNA& r, Ligand& l, Scoring_Function* sf_ptr, const Box& b, const Pocket& p, SAMPLE_MODE s_mode, OPTIMIZATION_MODE o_mode, RNGType& g, std::ostream& lg) : rna(r), lig(l), conformers(l.get_contexts()), score_func_ptr(sf_ptr), docking_box(b), pocket(p), Sample_Mode(s_mode), Optimization_Mode(o_mode), generator(g), tee(lg) {}
 
     // void clear_sampled_ligands() {
     //     this->sampled_ligands.clear();
@@ -79,6 +79,11 @@ public:
         return (*this)(dofs);
     }
     const Float operator()(const Floats& cf) {
+        // for(int i = 0; i < cf.size(); ++i) {
+        //     if(std::isnan(cf[i])) {
+        //         std::cout << " cf[" << i << "] is nan " << std::endl;
+        //     }
+        // }
         Float constraint_energy = 0.0;
         if(this->Optimization_Mode == SIMULATED_ANNEALING) {
             constraint_energy = this->simulated_check_dof_range(cf);
@@ -95,7 +100,7 @@ public:
         } else {
             assert(false);
         }
-        const Float& s = score_func.evaluate();
+        const Float& s = score_func_ptr->evaluate();
         if(!eq(constraint_energy,0)) {
             return s+constraint_energy;
         }
@@ -105,6 +110,15 @@ public:
         if(s < this->min_score) {
             this->min_score = s;
         }
+
+        // if(std::isnan(s)) {
+        //     std::cout << "sampled score is also nan" << std::endl;
+        //     for(int i = 0; i < cf.size(); ++i) {
+        //         std::cout << cf[i] << " ";
+        //     }
+        //     std::cout << std::endl;
+        //     this->lig.write(std::cout);
+        // }
         return s;
     }
 
@@ -115,22 +129,34 @@ public:
         const Box& b = this->docking_box;
         const Vec3d& ref_center = this->lig.get_ref_heavy_center_coord();
         //corner1 is the lower corner
-        if( (x+ref_center[0]) < b.corner1[0] || (y+ref_center[1]) < b.corner1[1] || (z+ref_center[2]) < b.corner1[2] ||
-            (x+ref_center[0]) > b.corner2[0] || (y+ref_center[1]) > b.corner2[1] || (z+ref_center[2]) > b.corner2[2] ) {
-            //if outside box return a harmonic potential to get it back
-            const Float& r_square = (Vec3d(x+ref_center[0],y+ref_center[1],z+ref_center[2])-b.center).norm_square();
-            return 100*r_square;
-            // return k_max_float;
+        const Vec3d& pos = Vec3d(x+ref_center[0],y+ref_center[1],z+ref_center[2]);
+        //if outside box return a harmonic potential to get it back
+        Float constraint = 0.0;
+        if(pos[0] < b.corner1[0] || pos[0] > b.corner2[0]) {
+            constraint += (pos[0]-b.corner1[0])*(pos[0]-b.corner1[0]);
+        } else if(pos[0] > b.corner2[0]) {
+            constraint += (pos[0]-b.corner2[0])*(pos[0]-b.corner2[0]);
         }
+        if(pos[1] < b.corner1[1]) {
+            constraint += (pos[1]-b.corner1[1])*(pos[1]-b.corner1[1]);
+        } else if(pos[1] > b.corner2[1]) {
+            constraint += (pos[1]-b.corner2[1])*(pos[1]-b.corner2[1]);
+        }
+        if(pos[2] < b.corner1[2]) {
+            constraint += (pos[2]-b.corner1[2])*(pos[2]-b.corner1[2]);
+        } else if(pos[2] > b.corner2[2]) {
+            constraint += (pos[2]-b.corner2[2])*(pos[2]-b.corner2[2]);
+        }
+        return 100*constraint;
 
         //conver sample conf to ligand conf, complete the rot axis
         const Vec3d rot_vector(cf[3], cf[4], cf[5]);
         const Float rot_angle = rot_vector.norm();
-        if(std::abs(rot_angle) > 4*k_pi) return k_max_float;
+        if(std::abs(rot_angle) > 2*k_pi) return 100*(std::abs(rot_angle) - 2*k_pi)*(std::abs(rot_angle) - 2*k_pi);
 
         if(this->Sample_Mode == SAMPLE_FLEXIBLE) {
             for(Int i = 6; i < cf.size(); ++i) {
-                if(std::abs(cf[i]) > 2*k_pi) return k_max_float;
+                if(std::abs(cf[i]) > 2*k_pi) return 100*(std::abs(cf[i]) - 2*k_pi)*(std::abs(cf[i]) - 2*k_pi);
             }
         }
 
@@ -169,16 +195,16 @@ public:
         } else if(pos[2] > b.corner2[2]) {
             constraint += (pos[2]-b.corner2[2])*(pos[2]-b.corner2[2]);
         }
-        return 1000*constraint;
+        return 100*constraint;
 
         //conver sample conf to ligand conf, complete the rot axis
         const Vec3d rot_vector(cf[3], cf[4], cf[5]);
         const Float rot_angle = rot_vector.norm();
-        if(std::abs(rot_angle) > 2*k_pi) return 1000*(std::abs(rot_angle) - 2*k_pi);
+        if(std::abs(rot_angle) > 2*k_pi) return 100*(std::abs(rot_angle) - 2*k_pi)*(std::abs(rot_angle) - 2*k_pi);
 
         if(this->Sample_Mode == SAMPLE_FLEXIBLE) {
             for(Int i = 6; i < cf.size(); ++i) {
-                if(std::abs(cf[i]) > 2*k_pi) return 1000*(std::abs(cf[i]) - 2*k_pi);
+                if(std::abs(cf[i]) > 2*k_pi) return 100*(std::abs(cf[i]) - 2*k_pi)*(std::abs(cf[i]) - 2*k_pi);
             }
         }
 
@@ -237,7 +263,8 @@ public:
 
             #ifdef DEBUG
             if(std::isnan(score_of_randomized)) {
-                this->lig.write(std::cout);
+                this->tee << "get nan randomized socre" << std::endl;
+                this->lig.write(this->tee);
                 assert(false);
             }
             #endif
@@ -268,12 +295,12 @@ public:
     }
 
     void quasi_newton() {
-        for(int docking_time = 1; docking_time <= 1; ++docking_time) {
+        for(int docking_time = 1; docking_time <= 10; ++docking_time) {
             const Floats start_dofs = this->get_randomized_dofs();
             VecDoub dofs(start_dofs.size(),0.0);
-            // for(int i = 0; i < start_dofs.size(); ++i) {
-            //     dofs[i] = start_dofs[i];
-            // }
+            for(int i = 0; i < start_dofs.size(); ++i) {
+                dofs[i] = start_dofs[i];
+            }
 
             Funcd<tmd::Sampling> quasi_func((*this));
             const Doub gtol = 0.001;
@@ -300,7 +327,7 @@ public:
     }
 
     void simulated_annealing() {
-        int docking_times = 1;
+        int docking_times = 10;
         const Floats start_dofs = this->get_randomized_dofs();
 
         // tmd::Float characteristic_score = (*this)(start_dofs);
@@ -311,9 +338,9 @@ public:
         // dels[2] = 0.1;
         Doub ftol = 0.1;
         VecDoub dofs(start_dofs.size(),0.0);
-        // for(int i = 0; i < start_dofs.size(); ++i) {
-        //     dofs[i] = start_dofs[i];
-        // }
+        for(int i = 0; i < start_dofs.size(); ++i) {
+            dofs[i] = start_dofs[i];
+        }
         Amebsa<tmd::Sampling> amebsa(dofs, dels, (*this), ftol);
 
         for(int docking_time = 1; docking_time <= docking_times; ++docking_time) {

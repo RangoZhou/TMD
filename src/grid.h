@@ -51,9 +51,7 @@ public:
 	Array3d() : m_i(0), m_j(0), m_k(0) {}
 	Array3d(int i, int j, int k, T filler_val) : m_i(i), m_j(j), m_k(k), m_data(checked_multiply(i, j, k),filler_val) {
         // std::cout << "calling Array3d" << std::endl;
-        #ifdef DEBUG
         assert(m_i > 0 && m_j > 0 && m_k > 0);
-        #endif
     }
 	int dim0() const { return m_i; }
 	int dim1() const { return m_j; }
@@ -67,10 +65,8 @@ public:
 		}
 	}
 	void resize(int i, int j, int k) { // data is essentially garbled
-        #ifdef DEBUG
         assert(i >= m_i && j >= m_j && k >= m_k);
         assert(i*j*k >= m_i*m_j*m_k);
-        #endif
 		m_i = i;
 		m_j = j;
 		m_k = k;
@@ -110,19 +106,14 @@ public:
         // std::cout << "grids init" << std::endl;
     }
     Grids(const int ii, const int jj, const int kk, const int si, const int sj, const int sk, const Float w, const Grid& filler_val) : g_data(ii,jj,kk,filler_val), g_i(ii), g_j(jj), g_k(kk), min_i(si), min_j(sj), min_k(sk), width(w) {
-        #ifdef DEBUG
         assert(ii >= 0 && jj >= 0 && kk >= 0);
         assert(w >= 0.0);
-        #endif
     }
     const Grid& at(int i, int j, int k) const {
         if(this->out_boundary(i,j,k)) {
             return k_false_grid;
         }
         else {
-            #ifdef DEBUG
-            assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
-            #endif
             return g_data(i-this->min_i,j-this->min_j,k-this->min_k);
         }
     }
@@ -143,9 +134,6 @@ public:
             std::cout << i << " " << j << " " << k << " is out of boundary, size: " << g_i << " " << g_j << " " << g_k << " min: " << min_i << " " << min_j << " " << min_k  << std::endl;
             assert(false);
         }
-        #ifdef DEBUG
-        assert(i-this->min_i >= 0 && j-this->min_j >= 0 && k-this->min_k >= 0);
-        #endif
         return g_data(i-this->min_i,j-this->min_j,k-this->min_k);
     }
     void assign(int i, int j, int k, const Grid& g) {

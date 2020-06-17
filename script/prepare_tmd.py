@@ -4,22 +4,22 @@ import numpy as np
 import subprocess
 import sys
 
-# def remove_substructure_from_mol2(path, save_path):
-#     mol2_contents = []
-#     with open(path) as (mol2):
-#         flag = True
-#         for mol2_line in mol2:
-#             if mol2_line[0:9] == '@<TRIPOS>':
-#                 if mol2_line[0:21] == '@<TRIPOS>SUBSTRUCTURE':
-#                     flag = False
-#                 else:
-#                     flag = True
-#             if flag == True:
-#                 mol2_contents.append(mol2_line)
+def remove_substructure_from_mol2(path, save_path):
+    mol2_contents = []
+    with open(path) as (mol2):
+        flag = True
+        for mol2_line in mol2:
+            if mol2_line[0:9] == '@<TRIPOS>':
+                if mol2_line[0:21] == '@<TRIPOS>SUBSTRUCTURE':
+                    flag = False
+                else:
+                    flag = True
+            if flag == True:
+                mol2_contents.append(mol2_line)
 
-#     with open(save_path, 'w') as save_write:
-#         for mol2_write_line in mol2_contents:
-#             save_write.write(mol2_write_line)
+    with open(save_path, 'w') as save_write:
+        for mol2_write_line in mol2_contents:
+            save_write.write(mol2_write_line)
 
 
 def generate_pdbqt(path, save_path, molecule_type, check_hydrogen, reserve_charge):
@@ -155,7 +155,7 @@ if __name__ == '__main__':
 
     pdbqt_input = mol2_output
     pdbqt_output = pdbqt_input + '.tmp2.pdbqt'
-    # remove_substructure_from_mol2(path=mol2_file, save_path=mol2_file)
+    remove_substructure_from_mol2(path=pdbqt_input, save_path=pdbqt_input)
     generate_pdbqt(path=pdbqt_input, save_path=pdbqt_output, molecule_type='ligand', check_hydrogen=False, reserve_charge=True)
 
     babel_input = pdbqt_output

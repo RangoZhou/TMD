@@ -32,9 +32,7 @@ struct Node_Id {
     int width_index = -1;
     // Node_Id() {}
     Node_Id(const int di, const int wi) : depth_index(di), width_index(wi) {
-        #ifdef DEBUG
         assert(depth_index >= 0 && width_index >= 0);
-        #endif
     }
 };
 
@@ -294,10 +292,6 @@ public:
     }
 
     void translate(const Vec3d& shift) {
-        //check if ref_atoms and atoms contain same num of atoms
-        #ifdef DEBUG
-        assert(this->atoms.size()==this->ref_atoms.size());
-        #endif
         //first, ligand translation
         for(auto& a : this->atoms) {
             a.set_coord(a.get_coord()+shift);
@@ -305,26 +299,17 @@ public:
     }
 
     void rotate(const Vec3d& rot_origin, const Vec3d& rot_axis, const Float& rot_angle) {
-        //check if ref_atoms and atoms contain same num of atoms
-        #ifdef DEBUG
-        assert(this->atoms.size()==this->ref_atoms.size());
-        #endif
 
         this->nodes[0].conf.rot_angle = rot_angle;
         this->nodes[0].conf.rot_axis = rot_axis;
 
         // this->nodes[0].conf.origin = std::accumulate(this->atoms.begin(),this->atoms.end(),Vec3d(0,0,0),[](const Vec3d& a, const Atom& b){return a + b.get_coord();})*(1.0/Float(this->atoms.size()));
         this->nodes[0].conf.origin = rot_origin;
-        #ifdef DEBUG
-        assert(this->atoms.size()!=0);
-        #endif
         this->nodes[0].transitive_transform(this->nodes[0].conf.origin, this->nodes[0].conf.rot_axis, this->nodes[0].conf.rot_angle, this->atoms);
     }
 
     void transform(const Floats& torsional_dofs) {
         #ifdef DEBUG
-        //check if ref_atoms and atoms contain same num of atoms
-        assert(this->atoms.size()==this->ref_atoms.size());
         //make sure dofs and nodes has the same number
         assert((this->nodes.size()-1) == torsional_dofs.size());
         #endif
@@ -362,13 +347,17 @@ public:
             this->rotate(rot_origin, rot_axis, 0.0);
         } else {
             const Vec3d rot_axis = rot_vector * (1.0/rot_angle);
-            #ifdef DEBUG
-            if(!eq(rot_axis.norm(),1.0)) {
-                std::cout << rot_angle << " " << rot_axis[0] << " " << rot_axis[1] << " " << rot_axis[2] <<std::endl;
-                assert(false);
-            }
-            assert(eq(rot_axis.norm(),1.0));
-            #endif
+            // #ifdef DEBUG
+            // if(!eq(rot_axis.norm(),1.0)) {
+            //     std::cout << rot_angle << " " << rot_axis[0] << " " << rot_axis[1] << " " << rot_axis[2] << " " << dofs[3] << " " << dofs[4] << " " << dofs[5] << std::endl;
+            //     for(int i = 0; i < dofs.size(); ++i) {
+            //         std::cout << dofs[i] << " ";
+            //     }
+            //     std::cout << std::endl;
+            //     assert(false);
+            // }
+            // assert(eq(rot_axis.norm(),1.0));
+            // #endif
             this->rotate(rot_origin, rot_axis, rot_angle);
         }
 

@@ -20,10 +20,8 @@ public:
 	// column-major
 	Matrix() : m_i(0), m_j(0) {}
 	Matrix(int i, int j, const T& filler_val) : m_data(i*j, filler_val), m_i(i), m_j(j) {
-		#ifdef DEBUG
 		assert(m_j >=0);
 		assert(m_i >=0);
-		#endif
 	}
 	int index(int i, int j) const {//return the index in m_data, column-major
 		#ifdef DEBUG
@@ -33,10 +31,8 @@ public:
 		return i + m_i*j; //column-major
 	}
 	void resize(int m, int n, const T& filler_val) {//resize to mxn, new sizes should be the same or greater than the old, preserves original data
-		#ifdef DEBUG
 		assert(m >= dim_1());//new sizes should be the same or greater than the old
 		assert(n >= dim_2());
-		#endif
 		if(m == dim_1() && n == dim_2()) return; // no-op
 		std::vector<T> tmp(m*n, filler_val);
 		for(int i = 0; i < m_i; i++) {
@@ -88,9 +84,7 @@ class Triangular_Matrix {
 public:
 	Triangular_Matrix() : m_dim(0) {}
 	Triangular_Matrix(int n, const T& filler_val) : m_data(n*(n+1)/2, filler_val), m_dim(n) {
-		#ifdef DEBUG
 		assert(n > 0);
-		#endif
 	}
 	int index(int i, int j) const {//return corresponding index in vector m_data
 		#ifdef DEBUG
@@ -102,6 +96,12 @@ public:
 	}
 	int index_permissive(int i, int j) const {
 		return (i < j) ? index(i, j) : index(j, i);
+	}
+	void resize(int n, const T& filler_val) {//resize m_data to has only the upper right Matrix elements, new sizes should be the same or greater than the old, preserves original data
+		assert(n >= m_dim);
+		if(n == m_dim) return; // no-op
+		m_dim = n;
+		m_data.resize(n*(n+1)/2, filler_val); // preserves original data
 	}
 	TMD_MATRIX_DEFINE_OPERATORS // temp macro defined above, one for indexing vector, one for Matrix indexing
 	int dim() const {//return m_dim, dimension of the Matrix
@@ -122,9 +122,7 @@ class Strictly_Triangular_Matrix {
 public:
 	Strictly_Triangular_Matrix() : m_dim(0) {}
 	Strictly_Triangular_Matrix(int n, const T& filler_val) : m_data(n*(n-1)/2, filler_val), m_dim(n) {
-		#ifdef DEBUG
 		assert(n > 0);
-		#endif
 	}
 	int index(int i, int j) const {//return corresponding index in vector m_data
 		#ifdef DEBUG
@@ -139,9 +137,7 @@ public:
 		return (i < j) ? index(i, j) : index(j, i);
 	}
 	void resize(int n, const T& filler_val) {//resize m_data to has only the upper right Matrix elements, new sizes should be the same or greater than the old, preserves original data
-		#ifdef DEBUG
 		assert(n >= m_dim);
-		#endif
 		if(n == m_dim) return; // no-op
 		m_dim = n;
 		m_data.resize(n*(n-1)/2, filler_val); // preserves original data
@@ -167,10 +163,8 @@ public:
 		//                t  t
 		//                   t
 		//where i,r,t are this, rectangular and triangular, respectively.
-		#ifdef DEBUG
 		assert(dim() == rectangular.dim_1());
 		assert(rectangular.dim_2() == triangular.dim());
-		#endif
 		// a filler value is needed by append or resize
 		// we will use a value from rectangular as the filler value
 		// but it can not be obtained if dim_1 or dim_2 is 0

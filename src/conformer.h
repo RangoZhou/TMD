@@ -102,7 +102,9 @@ public:
     }
 
     void prune_by_num(const int& topN) {
-        this->confs.erase(this->confs.begin()+topN,this->confs.end());
+        if(this->confs.size() > topN) {
+            this->confs.erase(this->confs.begin()+topN,this->confs.end());
+        }
     }
 
     void sort_by_score() {

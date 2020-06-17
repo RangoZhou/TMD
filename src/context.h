@@ -14,9 +14,7 @@ struct Context {
     std::string content = "";
     Context() {}
     Context(const int& ai, const std::string& ct) : atom_index(ai), content(ct) {
-        #ifdef DEBUG
-        assert(ci >= 0);
-        #endif
+        assert(ai >= -1);
     }
 };
 

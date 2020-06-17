@@ -12,12 +12,15 @@
 #include "molecule.h"
 #include "atom.h"
 #include "grid.h"
+#include "score.h"
 
 
 namespace tmd {
 
-class YW_Score {
+class YW_Score : public Scoring_Function {
 public:
+    const RNA& rna;
+    const Ligand& lig;
     const Float rmax = 10.0;
     const Float dr = 0.2;
     const int u_bin_num = static_cast<int>(rmax/dr);
@@ -31,8 +34,8 @@ public:
 
     Grids grids;//stores the RNA atom mapping with the grids
 
-    YW_Score(std::ostream& lg) : tee(lg) {
-        this->tee << "YW_Score init" << std::endl;
+    YW_Score(const RNA& r, const Ligand& l, std::ostream& lg) : rna(r), lig(l), tee(lg) {
+        this->tee << "YW_Score construct" << std::endl;
     }
 
     // YW_Score operator=(const YW_Score& rhs) {
@@ -44,7 +47,8 @@ public:
     //     return *this;
     // }
 
-    void init(const RNA& rna, const Ligand& lig) {
+    void init() {
+        this->tee << "YW_Score init" << std::endl;
         // processing input parameter and files
         this->tee << "rmax: " << this->rmax << " dr: " << this->dr << " u_bin_num: " << this->u_bin_num << std::endl;
         ////////////////////////////////////////////////////
@@ -90,10 +94,10 @@ public:
             }
         }
 
-        int rna_atom_num = rna.atom_num();
-        int lig_atom_num = lig.atom_num();
-        const Atoms& rna_atoms_ref = rna.get_atoms_reference();
-        const Atoms& lig_atoms_ref = lig.get_atoms_reference();
+        int rna_atom_num = this->rna.atom_num();
+        int lig_atom_num = this->lig.atom_num();
+        const Atoms& rna_atoms_ref = this->rna.get_atoms_reference();
+        const Atoms& lig_atoms_ref = this->lig.get_atoms_reference();
         std::vector<std::string> rna_sybyl_types(rna_atom_num,"");
         for(int i = 0; i < rna_atom_num; ++i) {
             const Atom& a = rna_atoms_ref[i];
@@ -215,7 +219,7 @@ public:
         this->tee << "finish initializing grids... size: " << this->grids.dim_1() << " " << this->grids.dim_2() << " " << this->grids.dim_3() << std::endl;
     }
 
-    const Float evaluate(const RNA& rna, const Ligand& lig) const {
+    const Float evaluate() {
         // std::cout << " YW thread num: " << tr.size() << " begin: " << tr[0].begin << " end: " << tr[0].end << std::endl;
         Float score = 0.0;
         // const int begin = tr[0].begin;
@@ -225,8 +229,8 @@ public:
         // thread_lock.lock();
         // std::cout << "evaluate YW thread " << std::this_thread::get_id() << " : " << begin << " " << end << std::endl;
         // thread_lock.unlock();
-        const Atoms& rna_atoms_ref = rna.get_atoms_reference();
-        const Atoms& lig_atoms_ref = lig.get_atoms_reference();
+        const Atoms& rna_atoms_ref = this->rna.get_atoms_reference();
+        const Atoms& lig_atoms_ref = this->lig.get_atoms_reference();
         for(int l_i = 0; l_i < lig_atoms_ref.size(); ++l_i) {
             const Atom& lig_atom = lig_atoms_ref[l_i];
             const Vec3d& lig_atom_coord = lig_atom.get_coord();
@@ -251,7 +255,7 @@ public:
             }
         }
         // return score/static_cast<Float>(lig.heavy_atom_num());
-        return score/static_cast<Float>(lig.heavy_atom_num());
+        return score/static_cast<Float>(this->lig.heavy_atom_num());
     }
 };
 
